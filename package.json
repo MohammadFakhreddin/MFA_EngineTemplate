@@ -1,0 +1,18 @@
+{
+    "scripts": {
+        "line-pipeline-vert": "glslc -g -fshader-stage=vert assets/engine/shaders/line_pipeline/LinePipeline.vert.hlsl  -o assets/engine/shaders/line_pipeline/LinePipeline.vert.spv -std=450core",
+        "line-pipeline-frag": "glslc -g -fshader-stage=frag assets/engine/shaders/line_pipeline/LinePipeline.frag.hlsl  -o assets/engine/shaders/line_pipeline/LinePipeline.frag.spv -std=450core",
+
+        "point-pipeline-vert": "glslc -g -fshader-stage=vert assets/engine/shaders/point_pipeline/PointPipeline.vert.hlsl  -o assets/engine/shaders/point_pipeline/PointPipeline.vert.spv -std=450core",
+        "point-pipeline-frag": "glslc -g -fshader-stage=frag assets/engine/shaders/point_pipeline/PointPipeline.frag.hlsl  -o assets/engine/shaders/point_pipeline/PointPipeline.frag.spv -std=450core",
+
+        "flat-shading-pipeline-vert": "glslc -g -fshader-stage=vert assets/engine/shaders/flat_shading_pipeline/FlatShadingPipeline.vert.hlsl  -o assets/engine/shaders/flat_shading_pipeline/FlatShadingPipeline.vert.spv -std=450core",
+        "flat-shading-pipeline-frag": "glslc -g -fshader-stage=frag assets/engine/shaders/flat_shading_pipeline/FlatShadingPipeline.frag.hlsl  -o assets/engine/shaders/flat_shading_pipeline/FlatShadingPipeline.frag.spv -std=450core",
+
+        "compile-shaders": "npm run line-pipeline-vert && npm run line-pipeline-frag && npm run point-pipeline-vert && npm run point-pipeline-frag && npm run flat-shading-pipeline-vert && npm run flat-shading-pipeline-frag",
+        
+        "cmake-mac": "cd build64; cmake .. -G Xcode -DCMAKE_TOOLCHAIN_FILE=./ios.toolchain.cmake -DPLATFORM=MAC; cd ..",
+        "cmake-ios": "cd buildIOS; cmake .. -G Xcode -DCMAKE_TOOLCHAIN_FILE=./ios.toolchain.cmake -DPLATFORM=OS64COMBINED; cd ..",
+        "cmake-windows": "cmake -A x64 -S . -Bbuild64"
+    }
+}
