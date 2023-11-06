@@ -25,7 +25,7 @@ namespace MFA
 	{
 		UpdateMousePosition();
 
-		if (std::abs(_mouseRelX) > glm::epsilon<float>() && std::abs(_mouseRelY) > glm::epsilon<float>() && _leftMouseDown == true)
+		if ((std::abs(_mouseRelX) > glm::epsilon<float>() || std::abs(_mouseRelY) > glm::epsilon<float>()) && _leftMouseDown == true)
 		{
 			auto const camVec = _position - _target;
 
