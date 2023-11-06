@@ -19,6 +19,11 @@ namespace MFA
 		glm::mat4 GetViewProjection();
 
 		[[nodiscard]]
+		glm::mat4 GetView();
+
+		glm::mat4 GetProjection();
+
+		[[nodiscard]]
 		bool IsDirty() const;
 
 		[[nodiscard]]
@@ -30,13 +35,15 @@ namespace MFA
 		[[nodiscard]]
 		glm::vec3 const & GetUp() const;
 
+		virtual void Update(float dtSec) {}
+
 	protected:
 
 		void SetProjectionDirty();
 
 		void SetViewDirty();
 
-		void CalculateViewMat();
+		virtual void CalculateViewMat();
 
 		void CalculateProjMat();
 

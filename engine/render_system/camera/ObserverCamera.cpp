@@ -50,15 +50,6 @@ namespace MFA
 					_motionButtons.y = std::clamp(_motionButtons.y, -1.0f, 1.0f);
 					_motionButtons.z = std::clamp(_motionButtons.z, -1.0f, 1.0f);
 				}
-				/*else if (event->type == SDL_MOUSEMOTION)
-				{
-					_mouseRelX = event->motion.x - _mouseX;
-					_mouseRelY = event->motion.y - _mouseY;
-
-					_mouseX = event->motion.x;
-					_mouseY = event->motion.y;
-					
-				}*/
 				else if (event->type == SDL_MOUSEBUTTONDOWN || event->type == SDL_MOUSEBUTTONUP)
 				{
 					auto const modifier = event->type == SDL_MOUSEBUTTONDOWN ? true : false;
@@ -69,20 +60,6 @@ namespace MFA
 				}
 			}
 		);
-
-		//if (UI::Instance != nullptr)
-		//{
-		//	UI::Instance->UpdateSignal.Register([this]()->void
-		//	{
-		//		UI::Instance->BeginWindow("Observer camera");
-		//		ImGui::InputFloat3("Position", &_position[0]);
-
-		//		auto eulerAngles = _rotation.GetEulerAngles();
-		//		ImGui::InputFloat3("Euler angles", &eulerAngles[0]);
-
-		//		UI::Instance->EndWindow();
-		//	});
-		//}
 	}
 
 	//-------------------------------------------------------------------------------------------------
@@ -91,7 +68,7 @@ namespace MFA
 
 	//-------------------------------------------------------------------------------------------------
 
-	void ObserverCamera::Update(float deltaTimeInSec)
+	void ObserverCamera::Update(float const dtSec)
 	{
 		UpdateMousePosition();
 
@@ -108,7 +85,7 @@ namespace MFA
 			if (_mouseRelX != 0.0f || _mouseRelY != 0.0f)
 			{
 				auto eulerAngles = _rotation.GetEulerAngles();
-				auto const rotationDistance = _rotationSpeed * deltaTimeInSec;
+				auto const rotationDistance = _rotationSpeed * dtSec;
 				eulerAngles.y = eulerAngles.y + rotationDistance * _mouseRelX;    // Reverse for view mat
 				eulerAngles.x = std::clamp(
 					eulerAngles.x - rotationDistance * _mouseRelY,
@@ -128,7 +105,7 @@ namespace MFA
 		if (motionMag2 > 0.0f)
 		{
 			auto const motionDirection =  _motionButtons / std::sqrt(motionMag2);
-			auto const moveDistance = _movementSpeed * deltaTimeInSec;
+			auto const moveDistance = _movementSpeed * dtSec;
 			auto const movementVector = motionDirection * moveDistance;
 
 			auto position = _position;

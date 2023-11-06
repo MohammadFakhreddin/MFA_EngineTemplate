@@ -43,16 +43,37 @@ namespace MFA
 
 		if (_isViewDirty == true)
 		{
-			auto rotationT = glm::transpose(_rotation.GetMatrix());
-			_forward = glm::normalize(rotationT * Math::ForwardVec4W0);
-			_right = glm::normalize(rotationT * Math::RightVec4W0);
-			_up = glm::normalize(rotationT * Math::UpVec4W0);
+
 		}
 
 		_isProjectionDirty = false;
 		_isViewDirty = false;
 
 		return _viewProjMat;
+	}
+
+	//-------------------------------------------------------------------------------------------------
+
+	glm::mat4 PerspectiveCamera::GetView()
+	{
+		if (_isViewDirty == true)
+		{
+			CalculateViewMat();
+		}
+		_isViewDirty = false;
+		return _viewMat;
+	}
+
+	//-------------------------------------------------------------------------------------------------
+
+	glm::mat4 PerspectiveCamera::GetProjection()
+	{
+		if (_isProjectionDirty == true)
+		{
+			CalculateProjMat();
+		}
+		_isProjectionDirty = false;
+		return _projMat;
 	}
 
 	//-------------------------------------------------------------------------------------------------
@@ -73,6 +94,11 @@ namespace MFA
 
 	void PerspectiveCamera::CalculateViewMat()
 	{
+		auto const rotationT = glm::transpose(_rotation.GetMatrix());
+		_forward = glm::normalize(rotationT * Math::ForwardVec4W0);
+		_right = glm::normalize(rotationT * Math::RightVec4W0);
+		_up = glm::normalize(rotationT * Math::UpVec4W0);
+
 		auto const translation = glm::translate(glm::identity<glm::mat4>(), _position);
 		auto const viewMat4 = _rotation.GetMatrix() * translation;
 		_viewMat = viewMat4;

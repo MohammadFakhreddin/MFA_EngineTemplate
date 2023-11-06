@@ -70,6 +70,10 @@ add_subdirectory("${CMAKE_SOURCE_DIR}/engine/libs/glm/glm")
 include_directories("${CMAKE_SOURCE_DIR}/engine/libs/glm/glm")
 link_libraries(glm)
 
+### Working directory
+
+add_compile_definitions("ASSET_DIR=${CMAKE_SOURCE_DIR}/assets")
+
 ### LibConfig ############################################
 
 add_subdirectory("${CMAKE_SOURCE_DIR}/engine/libs/libconfig")
@@ -125,8 +129,8 @@ link_libraries(RenderSystem)
 
 ### Executables
 
-### DemoApp ##############################################
+### MeshViewer ##############################################
 
-add_subdirectory("${CMAKE_SOURCE_DIR}/executables/demoapp")
+add_subdirectory("${CMAKE_SOURCE_DIR}/executables/mesh-viewer")
 
 ###########################################################

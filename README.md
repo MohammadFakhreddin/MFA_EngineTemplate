@@ -1,3 +1,4 @@
+<img src="examples/meshviewer.png" style="width:512px">
 
 # How to install dependencies
 

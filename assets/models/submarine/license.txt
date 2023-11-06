@@ -1,0 +1,11 @@
+Model Information:
+* title:	Yellow Submarine
+* source:	https://sketchfab.com/3d-models/yellow-submarine-0dcb53b8f0734509a83a51e672d27dc4
+* author:	Landon Wright (https://sketchfab.com/LandonWright)
+
+Model License:
+* license type:	CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
+* requirements:	Author must be credited. Commercial use is allowed.
+
+If you use this 3D model in your project be sure to copy paste this credit wherever you share it:
+This work is based on "Yellow Submarine" (https://sketchfab.com/3d-models/yellow-submarine-0dcb53b8f0734509a83a51e672d27dc4) by Landon Wright (https://sketchfab.com/LandonWright) licensed under CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)

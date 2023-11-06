@@ -42,6 +42,8 @@ list(
     "${CMAKE_CURRENT_SOURCE_DIR}/camera/PerspectiveCamera.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/camera/ObserverCamera.hpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/camera/ObserverCamera.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/camera/ArcballCamera.hpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/camera/ArcballCamera.cpp"
     
     "${CMAKE_CURRENT_SOURCE_DIR}/utils/LineRenderer.hpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/utils/LineRenderer.cpp"

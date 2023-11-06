@@ -8,9 +8,10 @@ namespace MFA
     public:
 
         explicit ObserverCamera();
+
         ~ObserverCamera();
 
-        void Update(float deltaTimeInSec);
+        void Update(float dtSec) override;
 
     protected:
 
@@ -28,5 +29,6 @@ namespace MFA
         bool _leftMouseDown = false;
 
         glm::vec3 _motionButtons{};
+
     };
 }
