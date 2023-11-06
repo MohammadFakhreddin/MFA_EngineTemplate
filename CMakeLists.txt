@@ -133,4 +133,8 @@ link_libraries(RenderSystem)
 
 add_subdirectory("${CMAKE_SOURCE_DIR}/executables/mesh-viewer")
 
-###########################################################
+### TextureMapping ##########################################
+
+add_subdirectory("${CMAKE_SOURCE_DIR}/executables/texture-mapping")
+
+#############################################################
