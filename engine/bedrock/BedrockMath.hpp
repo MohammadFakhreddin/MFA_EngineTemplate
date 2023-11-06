@@ -9,9 +9,6 @@
 #include <glm/gtc/quaternion.hpp>
 #include <glm/gtx/norm.hpp>
 
-#include <Eigen/Eigen>
-
-
 namespace MFA::Math 
 {
 
@@ -47,12 +44,6 @@ namespace MFA::Math
         float value = (static_cast<float>(std::rand()) / static_cast<float>(RAND_MAX)) * (fMax - fMin) + fMin;
         return static_cast<T>(value);
     }
-
-    [[nodiscard]]
-    Eigen::Matrix3d ToEigen(glm::dmat3 const & glmMatrix);
-
-    [[nodiscard]]
-    glm::dmat3 ToGlm(Eigen::Matrix3d const & eigenMatrix);
 
     [[nodiscard]]
     glm::quat ToQuat(float xDeg, float yDeg, float zDeg);

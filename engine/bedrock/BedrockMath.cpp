@@ -2,41 +2,8 @@
 
 #include "BedrockAssert.hpp"
 
-#include <Eigen/Eigenvalues>
-
-#define USE_SHAPELESS
-
 namespace MFA::Math
 {
-    //-------------------------------------------------------------------------------------------------
-
-    Eigen::Matrix3d ToEigen(glm::dmat3 const & glmMatrix)
-    {
-        Eigen::Matrix3d eigenMatrix;
-        for (int i = 0; i < 3; ++i)
-        {
-            for (int j = 0; j < 3; ++j)
-            {
-                eigenMatrix(j, i) = glmMatrix[i][j];
-            }
-        }
-        return eigenMatrix;
-    }
-
-    //-------------------------------------------------------------------------------------------------
-
-    glm::dmat3 ToGlm(Eigen::Matrix3d const & eigenMatrix)
-    {
-        glm::dmat3 glmMatrix;
-        for (int i = 0; i < 3; ++i)
-        {
-            for (int j = 0; j < 3; ++j)
-            {
-                glmMatrix[i][j] = eigenMatrix(j, i);
-            }
-        }
-        return glmMatrix;
-    }
 
     //-------------------------------------------------------------------------------------------------
 
@@ -297,112 +264,6 @@ namespace MFA::Math
             std::vector<glm::dvec3>{toP1, toP2, toP3, toP4}
         );
     }
-
-    //-------------------------------------------------------------------------------------------------
-
-#ifdef USE_SHAPELESS
-    //https://github.com/Q-Minh/meshless-deformation-based-on-shape-matching/blob/master/src/deformable_mesh.cpp
-    // This function needs at least 4 non-planar points
-    glm::dmat3 OptimalRotation(
-        std::vector<glm::dvec3> const & fromPoints,
-        std::vector<glm::dvec3> const & toPoints
-    )
-    {
-        MFA_ASSERT(fromPoints.size() >= 4);
-        MFA_ASSERT(fromPoints.size() == toPoints.size());
-        
-        // Based on the meshless shape matching paper
-        glm::dvec3 fromCM {};
-        for (auto const & point : fromPoints)
-        {
-            fromCM += point;
-        }
-        fromCM /= static_cast<double>(fromPoints.size());
-
-        glm::dvec3 toCM {};
-        for (auto const & point : toPoints)
-        {
-            toCM += point;
-        }
-        toCM /= static_cast<double>(toPoints.size());
-
-        Eigen::Matrix3d Apq;
-        Apq.setZero();
-
-        for (int i = 0; i < static_cast<int>(fromPoints.size()); ++i)
-        {
-            auto const to = toPoints[i] - toCM;
-            auto const from = fromPoints[i] - fromCM;
-
-            Eigen::Vector3d const qi{ from.x, from.y, from.z };
-            Eigen::Vector3d const pi{ to.x, to.y, to.z };
-
-            Apq += pi * qi.transpose();
-        }
-
-        Eigen::Matrix3d ApqSquared = (Apq.transpose() * Apq);
-
-        // Close to zero determinant is not necessary a bad thing
-        //MFA_ASSERT(std::abs(ApqSquared.determinant()) > glm::epsilon<double>());
-
-        Eigen::SelfAdjointEigenSolver<Eigen::Matrix3d> eigensolver(ApqSquared);
-
-        Eigen::Matrix3d SInv = eigensolver.operatorInverseSqrt();
-
-        Eigen::Matrix3d const R = Apq * SInv;
-
-        MFA_ASSERT((std::isnan(R(0, 0)) == false));
-        MFA_ASSERT((std::isnan(R(0, 1)) == false));
-        MFA_ASSERT((std::isnan(R(0, 2)) == false));
-        MFA_ASSERT((std::isnan(R(1, 0)) == false));
-        MFA_ASSERT((std::isnan(R(1, 1)) == false));
-        MFA_ASSERT((std::isnan(R(1, 2)) == false));
-        MFA_ASSERT((std::isnan(R(2, 0)) == false));
-        MFA_ASSERT((std::isnan(R(2, 1)) == false));
-        MFA_ASSERT((std::isnan(R(2, 2)) == false));
-
-        // MFA_LOG_INFO(
-        //     "R:\n %f %f %f \n %f %f %f \n %f %f %f", 
-        //     R(0, 0), R(1, 0), R(2, 0), 
-        //     R(0, 1), R(1, 1), R(2, 1), 
-        //     R(0, 2), R(1, 2), R(2, 2)
-        // );
-
-        return ToGlm(R);
-    }
-#else
-	glm::dmat3 OptimalRotation(
-        std::vector<glm::dvec3> const& fromPoints,
-        std::vector<glm::dvec3> const& toPoints
-	)
-	{
-        glm::dvec3 fromCmSum {};
-        for (auto const & fromPoint : fromPoints)
-        {
-            fromCmSum += fromPoint;
-        }
-        glm::dvec3 fromCm = fromCmSum / static_cast<double>(fromPoints.size());
-
-        glm::dvec3 toCmSum {};
-        for (auto const& toPoint : toPoints)
-        {
-            toCmSum += toPoint;
-        }
-        glm::dvec3 toCm = toCmSum / static_cast<double>(toPoints.size());
-
-        glm::quat quatSum {};
-        for (int i = 0; i < toPoints.size(); ++i)
-        {
-            auto const toVec = glm::normalize(toPoints[i] - toCm);
-            auto const fromVec = glm::normalize(fromPoints[i] - fromCm);
-            auto const quat = FindRotation(fromVec, toVec);
-            quatSum += quat;
-        }
-
-        auto const quatAvg = glm::normalize(quatSum);
-        return glm::toMat3(quatAvg);
-	}
-#endif
 
     //-------------------------------------------------------------------------------------------------
 
