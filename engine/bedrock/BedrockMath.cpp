@@ -250,23 +250,6 @@ namespace MFA::Math
 
     //-------------------------------------------------------------------------------------------------
 
-    glm::dmat3 OptimalRotation(
-        glm::dvec3 const& fromP1, glm::dvec3 const& fromP2, glm::dvec3 const& fromP3,
-        glm::dvec3 const& toP1, glm::dvec3 const& toP2, glm::dvec3 const& toP3
-    )
-    {
-
-        glm::dvec3 const fromP4 = glm::normalize(glm::cross(fromP3 - fromP2, fromP2 - fromP1)) + fromP1;
-        glm::dvec3 const toP4 = glm::normalize(glm::cross(toP3 - toP2, toP2 - toP1)) + toP1;
-
-        return OptimalRotation(
-            std::vector<glm::dvec3>{fromP1, fromP2, fromP3, fromP4}, 
-            std::vector<glm::dvec3>{toP1, toP2, toP3, toP4}
-        );
-    }
-
-    //-------------------------------------------------------------------------------------------------
-
     void Translate(glm::mat4 & transform, float distance[3])
     {
         transform = glm::translate(transform, glm::vec3(distance[0], distance[1], distance[2]));

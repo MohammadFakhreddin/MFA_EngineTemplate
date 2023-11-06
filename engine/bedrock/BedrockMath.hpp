@@ -181,18 +181,6 @@ namespace MFA::Math
 	);
 
     [[nodiscard]]
-    glm::dmat3 OptimalRotation(
-        glm::dvec3 const& fromP1, glm::dvec3 const& fromP2, glm::dvec3 const& fromP3,
-        glm::dvec3 const& toP1, glm::dvec3 const& toP2, glm::dvec3 const& toP3
-    );
-
-    [[nodiscard]]
-    glm::dmat3 OptimalRotation(
-        std::vector<glm::dvec3> const & fromPoints,
-        std::vector<glm::dvec3> const & toPoints
-    );
-
-    [[nodiscard]]
     glm::vec4 WorldSpaceToProjectedSpace(glm::vec4 const& worldPosition, glm::mat4 const& viewProjection);
 
     [[nodiscard]]
