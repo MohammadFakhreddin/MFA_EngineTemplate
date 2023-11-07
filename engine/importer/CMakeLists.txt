@@ -12,6 +12,9 @@ list(
     "${CMAKE_CURRENT_SOURCE_DIR}/ImportGLTF.hpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/ImportGLTF.cpp"
 
+    "${CMAKE_CURRENT_SOURCE_DIR}/ImportObj.hpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/ImportObj.cpp"
+
     "${CMAKE_CURRENT_SOURCE_DIR}/JsonUtils.hpp"
 )
 

@@ -19,6 +19,8 @@
 #include <glm/glm.hpp>
 #include <filesystem>
 
+#include "ImportObj.hpp"
+
 using namespace MFA;
 
 bool renderWireframe = false;
@@ -202,6 +204,24 @@ private:
 		MFA_ASSERT(std::filesystem::exists(path));
 		auto const cpuTexture = Importer::UncompressedImage(path);
 
+		/*int width = 512;
+		int height = 512;
+		int components = 4;
+		auto const blob = Memory::AllocSize(width * height * components);
+		auto* ptr = blob->As<uint8_t>();
+		for (int i = 0; i < width * height * components; ++i)
+		{
+			ptr[i] = Math::Random(0, 256);
+		}
+
+		auto cpuTexture = Importer::InMemoryTexture(
+			*blob, 
+			width, 
+			height, 
+			Asset::Texture::Format::UNCOMPRESSED_UNORM_R8G8B8A8_LINEAR,
+			components
+		);*/
+
 		auto const* device = LogicalDevice::Instance;
 		auto const commandBuffer = RB::BeginSingleTimeCommand(
 			device->GetVkDevice(),
@@ -305,7 +325,21 @@ std::shared_ptr<FlagMesh> GenerateFlag(
 	std::vector<std::tuple<int, int, int>> triangles{};   // Used to construct the growth tensors
 	std::vector<glm::vec2> uvs{};
 
-	int xCount = 2;
+	Importer::ObjModel objModel{};
+	bool success = Importer::LoadObj(Path::Instance->Get("models/chess_bishop/bishop.obj"), objModel);
+	MFA_ASSERT(success == true);
+
+	for (int i = 0; i < objModel.indices.size(); i += 3)
+	{
+		triangles.emplace_back(std::tuple{ objModel.indices[i], objModel.indices[i + 1], objModel.indices[i + 2] });
+	}
+	for (auto & vertex : objModel.vertices)
+	{
+		vertices.emplace_back(vertex.position);
+		uvs.emplace_back(vertex.uv);
+	}
+
+	/*int xCount = 2;
 	int yCount = 2;
 
 	glm::vec3 start{ -1.5f, -1.0f, 3.0f };
@@ -336,7 +370,7 @@ std::shared_ptr<FlagMesh> GenerateFlag(
 			triangles.emplace_back(std::tuple{ currX + i, currX + i + 1, nextX + i + 1 });
 			triangles.emplace_back(std::tuple{ currX + i,  nextX + i + 1, nextX + i});
 		}
-	}
+	}*/
 
 	return std::make_shared<FlagMesh>(
 		pipeline,
