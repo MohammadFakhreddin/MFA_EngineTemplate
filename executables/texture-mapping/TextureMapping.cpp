@@ -45,7 +45,8 @@ public:
 		glm::vec4 const& color,
 		std::vector<glm::vec3> const& vertices,
 		std::vector<Triangle> const& triangles,         // Indices and intensity
-		std::vector<glm::vec2> uvs
+		std::vector<glm::vec2> const & uvs,
+		std::vector<glm::vec3> const & normals
 	)
 		: _pipeline(std::move(pipeline))
 		, _wireframePipeline(std::move(wireframePipeline))
@@ -54,7 +55,7 @@ public:
 
 		CreateIndexBuffer(triangles);
 
-		CreateVertexBuffer(vertices, uvs);
+		CreateVertexBuffer(vertices, uvs, normals);
 		
 		CreateGpuTexture();
 
@@ -152,7 +153,7 @@ private:
 		_indexCount = static_cast<int>(indices.size());
 	}
 
-	void CreateVertexBuffer(std::vector<glm::vec3> const & positions, std::vector<glm::vec2> const & uvs)
+	void CreateVertexBuffer(std::vector<glm::vec3> const & positions, std::vector<glm::vec2> const & uvs, std::vector<glm::vec3> const & normals)
 	{
 		auto device = LogicalDevice::Instance->GetVkDevice();
 		auto physicalDevice = LogicalDevice::Instance->GetPhysicalDevice();
@@ -170,7 +171,7 @@ private:
 		{
 			vertices[i].position = positions[i];
 			vertices[i].baseColorUV = uvs[i];
-			vertices[i].normal = +Math::ForwardVec3;
+			vertices[i].normal = normals[i];
 		}
 
 		Alias const alias{ vertices.data(), vertices.size() };
@@ -324,6 +325,7 @@ std::shared_ptr<FlagMesh> GenerateFlag(
 	std::vector<glm::vec3> vertices{};
 	std::vector<std::tuple<int, int, int>> triangles{};   // Used to construct the growth tensors
 	std::vector<glm::vec2> uvs{};
+	std::vector<glm::vec3> normals{};
 
 	Importer::ObjModel objModel{};
 	bool success = Importer::LoadObj(Path::Instance->Get("models/chess_bishop/bishop.obj"), objModel);
@@ -337,6 +339,7 @@ std::shared_ptr<FlagMesh> GenerateFlag(
 	{
 		vertices.emplace_back(vertex.position);
 		uvs.emplace_back(vertex.uv);
+		normals.emplace_back(vertex.normal);
 	}
 
 	/*int xCount = 2;
@@ -378,7 +381,8 @@ std::shared_ptr<FlagMesh> GenerateFlag(
 		glm::vec4{ 1.0f, 0.0f, 0.0f, 1.0f },
 		vertices,
 		triangles,
-		uvs
+		uvs,
+		normals
 	);
 
 }
