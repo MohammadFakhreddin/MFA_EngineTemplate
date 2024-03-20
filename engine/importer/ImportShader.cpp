@@ -51,5 +51,24 @@ namespace MFA::Importer
 
 	//-------------------------------------------------------------------------------------------------
 
+    bool CompileShaderToSPV(
+        std::string const & inputPath,
+        std::string const & outputPath,
+        std::string const & stage
+    )
+	{
+		std::string command = "";
+		MFA_STRING(
+			command,
+			"glslc -g -fshader-stage=%s \"%s\" -o \"%s\" -std=450core",
+			stage.c_str(),
+			inputPath.c_str(),
+			outputPath.c_str()
+		);
+		auto const result = std::system(command.c_str());
+		return result == 0;
+	}
+
+	//-------------------------------------------------------------------------------------------------
 
 }

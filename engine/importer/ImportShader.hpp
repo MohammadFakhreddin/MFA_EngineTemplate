@@ -20,4 +20,11 @@ namespace MFA::Importer
         VkShaderStageFlagBits stage,
         std::string const & entryPoint
     );
+
+    bool CompileShaderToSPV(
+        std::string const & inputPath,
+        std::string const & outputPath,
+        std::string const & stage
+    );
+
 }

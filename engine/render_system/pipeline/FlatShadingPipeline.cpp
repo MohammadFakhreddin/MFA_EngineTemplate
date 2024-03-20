@@ -189,6 +189,14 @@ namespace MFA
 	void FlatShadingPipeline::CreatePipeline()
 	{
 		// Vertex shader
+		{
+			bool success = Importer::CompileShaderToSPV(
+				Path::Instance->Get("engine/shaders/flat_shading_pipeline/FlatShadingPipeline.vert.hlsl"),
+				Path::Instance->Get("engine/shaders/flat_shading_pipeline/FlatShadingPipeline.vert.spv"),
+				"vert"
+			);
+			MFA_ASSERT(success == true);
+		}
 		auto cpuVertexShader = Importer::ShaderFromSPV(
 			Path::Instance->Get("engine/shaders/flat_shading_pipeline/FlatShadingPipeline.vert.spv"),
 			VK_SHADER_STAGE_VERTEX_BIT,
@@ -200,6 +208,14 @@ namespace MFA
 		);
 
 		// Fragment shader
+		{
+			bool success = Importer::CompileShaderToSPV(
+				Path::Instance->Get("engine/shaders/flat_shading_pipeline/FlatShadingPipeline.frag.hlsl"),
+				Path::Instance->Get("engine/shaders/flat_shading_pipeline/FlatShadingPipeline.frag.spv"),
+				"frag"
+			);
+			MFA_ASSERT(success == true);
+		}
 		auto cpuFragmentShader = Importer::ShaderFromSPV(
 			Path::Instance->Get("engine/shaders/flat_shading_pipeline/FlatShadingPipeline.frag.spv"),
 			VK_SHADER_STAGE_FRAGMENT_BIT,

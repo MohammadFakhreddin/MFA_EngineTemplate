@@ -1,5 +1,6 @@
 #include "PerspectiveCamera.hpp"
 
+#include "BedrockMath.hpp"
 #include "LogicalDevice.hpp"
 
 namespace MFA
@@ -39,11 +40,6 @@ namespace MFA
 		if (_isViewDirty == true || _isProjectionDirty == true)
 		{
 			_viewProjMat = _projMat * _viewMat;
-		}
-
-		if (_isViewDirty == true)
-		{
-
 		}
 
 		_isProjectionDirty = false;

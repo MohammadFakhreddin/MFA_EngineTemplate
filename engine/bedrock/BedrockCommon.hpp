@@ -1,6 +1,6 @@
 #pragma once
 
-#define MFA_VARIABLE1(variable, type, default)           \
+#define MFA_VARIABLE1(variable, type, default)                  \
 protected:                                                      \
 type _##variable = default;                                     \
 public:                                                         \

@@ -137,6 +137,13 @@ namespace MFA::Math
 
     //-------------------------------------------------------------------------------------------------
 
+    glm::dmat4 Scale(glm::dvec3 const& scale)
+    {
+        return glm::scale(glm::identity<glm::dmat4>(), scale);
+    }
+
+    //-------------------------------------------------------------------------------------------------
+
     float SignedAngle2d(glm::vec2 const& from, glm::vec2 const& to)
     {
         auto const angle = std::atan2(
@@ -267,6 +274,13 @@ namespace MFA::Math
     glm::mat4 Translate(glm::vec3 const& distance)
     {
         return glm::translate(glm::identity<glm::mat4>(), distance);
+    }
+
+    //-------------------------------------------------------------------------------------------------
+
+    glm::dmat4 Translate(glm::dvec3 const& distance)
+    {
+        return glm::translate(glm::identity<glm::dmat4>(), distance);
     }
 
     //-------------------------------------------------------------------------------------------------

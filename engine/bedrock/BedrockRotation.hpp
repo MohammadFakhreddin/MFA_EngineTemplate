@@ -22,9 +22,9 @@ namespace MFA
         [[nodiscard]]
         glm::mat4 const & GetMatrix() const;
         
-        void SetEulerAngles(glm::vec3 const & eulerAngles);
+        bool SetEulerAngles(glm::vec3 const & eulerAngles);
 
-        void SetQuaternion(glm::quat const & quaternion);
+        bool SetQuaternion(glm::quat const & quaternion);
         
         bool operator==(glm::vec3 const & eulerAngles) const;
 

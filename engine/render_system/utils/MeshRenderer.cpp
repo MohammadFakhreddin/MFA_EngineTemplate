@@ -1,6 +1,7 @@
 #include "MeshRenderer.hpp"
 
 #include "LogicalDevice.hpp"
+#include "MeshInstance.hpp"
 
 namespace MFA
 {
@@ -10,11 +11,15 @@ namespace MFA
 	MeshRenderer::MeshRenderer(
 		std::shared_ptr<FlatShadingPipeline> pipeline,
 		std::shared_ptr<AS::GLTF::Model> const& model,
-		std::shared_ptr<RT::GpuTexture> errorTexture
+		std::shared_ptr<RT::GpuTexture> errorTexture,
+		bool hasOverrideColor,
+		glm::vec4 overrideColor
 	)
 		: _pipeline(std::move(pipeline))
 		, _meshData(model->mesh->GetMeshData())
 		, _errorTexture(std::move(errorTexture))
+		, _hasOverrideColor(hasOverrideColor)
+		, _overrideColor(overrideColor)
 	{
 
 		if (model->mesh->IsCentered() == false)
@@ -44,9 +49,7 @@ namespace MFA
 
 		_indexCount = model->mesh->GetIndexCount();
 		_indices = model->mesh->GetIndexData();
-
-		GenerateCollisionTriangles(*model);
-
+		
 		RB::EndAndSubmitSingleTimeCommand(
 			device->GetVkDevice(),
 			device->GetGraphicCommandPool(),
@@ -57,7 +60,7 @@ namespace MFA
 
 	//-------------------------------------------------------------------------------------------------
 
-	void MeshRenderer::Render(RT::CommandRecordState& recordState, std::vector<glm::mat4> const& models) const
+	void MeshRenderer::Render(RT::CommandRecordState& recordState, std::vector<glm::mat4> const& models)
 	{
 		_pipeline->BindPipeline(recordState);
 
@@ -76,33 +79,51 @@ namespace MFA
 		);
 		for (auto const& model : models)
 		{
-			_pipeline->SetPushConstants(
-				recordState,
-				FlatShadingPipeline::PushConstants{
-				.model = model
-			}
-			);
-
-			int descriptorSetIdx = 0;
-			for (auto& subMesh : _meshData->subMeshes)
+			auto const & rootNodes = _meshData->rootNodes;
+			auto & nodes = _meshData->nodes;
+			for (auto & rootNode : rootNodes)
 			{
-				for (auto const& primitive : subMesh.primitives)
-				{
-					RB::AutoBindDescriptorSet(
-						recordState,
-						RB::UpdateFrequency::PerGeometry,
-						_descriptorSets[descriptorSetIdx].descriptorSets[0]
-					);
+				auto & node = nodes[rootNode];
+				DrawNode(
+					recordState, 
+					node, 
+					model
+				);
+			}
+		}
+	}
 
-					++descriptorSetIdx;
+	//-------------------------------------------------------------------------------------------------
 
-					RB::DrawIndexed(
-						recordState,
-						primitive.indicesCount,
-						1,
-						primitive.indicesStartingIndex
-					);
-				}
+	void MeshRenderer::Render(RT::CommandRecordState& recordState, std::vector<MeshInstance*> const& instances) const
+	{
+		_pipeline->BindPipeline(recordState);
+
+		RB::BindIndexBuffer(
+			recordState,
+			*_indicesBuffer,
+			0,
+			VK_INDEX_TYPE_UINT32
+		);
+
+		RB::BindVertexBuffer(
+			recordState,
+			*_verticesBuffer,
+			0,
+			0
+		);
+		for (auto & instance : instances)
+		{
+			auto const& rootNodes = _meshData->rootNodes;
+			auto & nodes = instance->GetNodes();
+			for (auto& rootNode : rootNodes)
+			{
+				auto& node = nodes[rootNode];
+				DrawNode(
+					recordState,
+					node,
+					instance->GetTransform().GetMatrix()
+				);
 			}
 		}
 	}
@@ -153,8 +174,10 @@ namespace MFA
 
 	//-------------------------------------------------------------------------------------------------
 
-	std::shared_ptr<RT::BufferGroup> MeshRenderer::GenerateIndexBuffer(VkCommandBuffer cb,
-		AS::GLTF::Model const& model)
+	std::shared_ptr<RT::BufferGroup> MeshRenderer::GenerateIndexBuffer(
+		VkCommandBuffer cb,
+		AS::GLTF::Model const& model
+	)
 	{
 		auto& mesh = model.mesh;
 
@@ -221,13 +244,13 @@ namespace MFA
 			for (auto const& primitive : subMesh.primitives)
 			{
 				FlatShadingPipeline::Material data{
-					.color = glm::vec4{
+					.color = _hasOverrideColor == false ? glm::vec4{
 						primitive.baseColorFactor[0],
 						primitive.baseColorFactor[1],
 						primitive.baseColorFactor[2],
 						primitive.baseColorFactor[3]
-					},
-						.hasBaseColorTexture = primitive.hasBaseColorTexture ? 1 : 0
+					} : _overrideColor,
+					.hasBaseColorTexture = primitive.hasBaseColorTexture ? 1 : 0
 				};
 
 				auto materialBuffer = RB::CreateLocalUniformBuffer(
@@ -270,8 +293,13 @@ namespace MFA
 	{
 		int nextMaterialIdx = 0;
 
+		_descriptorSets.clear();
+
 		for (auto const& subMesh : _meshData->subMeshes)
 		{
+			_descriptorSets.emplace_back();
+			auto & descriptorSets = _descriptorSets.back();
+
 			for (auto const& primitive : subMesh.primitives)
 			{
 				auto const* gpuTexture = _errorTexture.get();
@@ -281,7 +309,7 @@ namespace MFA
 					gpuTexture = _textures[primitive.baseColorTextureIndex].get();
 				}
 
-				_descriptorSets.emplace_back(
+				descriptorSets.emplace_back(
 					_pipeline->CreatePerGeometryDescriptorSetGroup(
 						*_materials[nextMaterialIdx]->buffers[0],
 						*gpuTexture
@@ -295,60 +323,58 @@ namespace MFA
 
 	//-------------------------------------------------------------------------------------------------
 
-	void MeshRenderer::GenerateCollisionTriangles(AS::GLTF::Model const& model)
+	void MeshRenderer::DrawSubMesh(
+		RT::CommandRecordState& recordState,
+		int const subMeshIdx,
+		glm::mat4 const& transform
+	) const
 	{
-		_collisionTriangles = {};
+		auto const& subMesh = _meshData->subMeshes[subMeshIdx];
+		auto const& descriptorSets = _descriptorSets[subMeshIdx];
 
-		auto const& mesh = model.mesh;
+		_pipeline->SetPushConstants(
+			recordState,
+			FlatShadingPipeline::PushConstants{
+				.model = transform
+			}
+		);
 
-		auto const* indices = mesh->GetIndexData()->As<AS::GLTF::Index>();
-		auto const indicesCount = mesh->GetIndexCount();
-
-		auto const* vertices = mesh->GetVertexData()->As<AS::GLTF::Vertex>();
-
-		MFA_ASSERT(indicesCount % 3 == 0);
-
-		int faceCount = static_cast<int>(indicesCount) / 3;
-		// TODO: This chunk of code is very useful. We need a helper function from it
-		for (int i = 0; i < faceCount; ++i)
+		for (int i = 0; i < static_cast<int>(subMesh.primitives.size()); ++i)
 		{
-			auto const idx0 = indices[3 * i];
-			auto const idx1 = indices[3 * i + 1];
-			auto const idx2 = indices[3 * i + 2];
+			auto const& primitive = subMesh.primitives[i];
+			RB::AutoBindDescriptorSet(
+				recordState,
+				RB::UpdateFrequency::PerGeometry,
+				descriptorSets[i].descriptorSets[0]
+			);
 
-			auto const& vertex0 = vertices[idx0];
-			auto const& vertex1 = vertices[idx1];
-			auto const& vertex2 = vertices[idx2];
-
-			glm::dvec3 const v0Pos = vertex0.position;
-			glm::dvec3 const v1Pos = vertex1.position;
-			glm::dvec3 const v2Pos = vertex2.position;
-
-			_collisionTriangles.emplace_back(Collision::GenerateCollisionTriangle(v0Pos, v1Pos, v2Pos));
+			RB::DrawIndexed(
+				recordState,
+				primitive.indicesCount,
+				1,
+				primitive.indicesStartingIndex
+			);
 		}
 	}
 
 	//-------------------------------------------------------------------------------------------------
 
-	[[nodiscard]]
-	std::vector<CollisionTriangle> MeshRenderer::GetCollisionTriangles(glm::mat4 const& model) const noexcept
+	void MeshRenderer::DrawNode(
+		RT::CommandRecordState& recordState, 
+		Asset::GLTF::Node & node,
+		glm::mat4 const& parentTransform
+	) const
 	{
-		auto copy = _collisionTriangles;
-		for (auto& triangle : copy)
+		auto const transform = parentTransform * node.transform.GetMatrix();
+		if (node.hasSubMesh())
 		{
-			triangle.normal = glm::normalize(model * glm::vec4{ triangle.normal, 0.0f });
-			triangle.center = model * glm::vec4{ triangle.center, 1.0f };
-
-			for (auto& edgeNormal : triangle.edgeNormals)
-			{
-				edgeNormal = glm::normalize(model * glm::vec4{ edgeNormal, 0.0f });
-			}
-			for (auto& edgeVertex : triangle.edgeVertices)
-			{
-				edgeVertex = model * glm::vec4{ edgeVertex, 1.0f };
-			}
+			DrawSubMesh(recordState, node.subMeshIndex, transform);
 		}
-		return copy;
+
+		for (auto const child : node.children)
+		{
+			DrawNode(recordState, _meshData->nodes[child], transform);
+		}
 	}
 
 	//-------------------------------------------------------------------------------------------------
@@ -391,6 +417,13 @@ namespace MFA
 		}
 
 		return result;
+	}
+
+	//-------------------------------------------------------------------------------------------------
+
+	std::vector<Asset::GLTF::Node> const& MeshRenderer::GetNodes() const noexcept
+	{
+		return _meshData->nodes;
 	}
 
 	//-------------------------------------------------------------------------------------------------

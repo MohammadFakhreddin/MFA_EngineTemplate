@@ -37,6 +37,8 @@ list(
     "${CMAKE_CURRENT_SOURCE_DIR}/pipeline/PointPipeline.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/pipeline/FlatShadingPipeline.hpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/pipeline/FlatShadingPipeline.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/pipeline/BlinnPhongPipeline.hpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/pipeline/BlinnPhongPipeline.cpp"
     
     "${CMAKE_CURRENT_SOURCE_DIR}/camera/PerspectiveCamera.hpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/camera/PerspectiveCamera.cpp"
@@ -49,8 +51,11 @@ list(
     "${CMAKE_CURRENT_SOURCE_DIR}/utils/LineRenderer.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/utils/PointRenderer.hpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/utils/PointRenderer.cpp"
+    
     "${CMAKE_CURRENT_SOURCE_DIR}/utils/MeshRenderer.hpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/utils/MeshRenderer.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/utils/MeshInstance.hpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/utils/MeshInstance.cpp"
 )
 
 set(LIBRARY_NAME "RenderSystem")

@@ -187,7 +187,7 @@ namespace MFA
             _physicalDevice = findPhysicalDeviceResult.physicalDevice;
             // I'm not sure if this is a correct thing to do but currently I'm enabling all gpu features.
             _physicalDeviceFeatures = findPhysicalDeviceResult.physicalDeviceFeatures;
-            _maxSampleCount = VK_SAMPLE_COUNT_2_BIT;//findPhysicalDeviceResult.maxSampleCount;                    // TODO It should be a setting
+            _maxSampleCount = findPhysicalDeviceResult.maxSampleCount;                    // TODO It should be a setting
             _physicalDeviceProperties = findPhysicalDeviceResult.physicalDeviceProperties;
             std::string message = "Supported physical device features are:";
             message += "\nSample rate shading support: ";
@@ -398,10 +398,17 @@ namespace MFA
         {
             _currentFrame = 0;
 	    }
+
+        auto const vkDevice = LogicalDevice::Instance->GetVkDevice();
+
+        auto const graphicFence = GetGraphicFence(recordState);
+        auto const computeFence = GetComputeFence(recordState);
+        RB::WaitForFence(vkDevice, {graphicFence, computeFence});
+        RB::ResetFences(vkDevice, {graphicFence, computeFence});
         
 	    // We ignore failed acquire of image because a resize will be triggered at end of pass
 	    RB::AcquireNextImage(
-            LogicalDevice::Instance->GetVkDevice(),
+            vkDevice,
 		    GetPresentSemaphore(recordState),
 		    swapChain,
             recordState.imageIndex
@@ -742,17 +749,11 @@ namespace MFA
         {
         case RT::CommandBufferType::Compute:
         {
-            auto const computeFence = GetComputeFence(recordState);
-            RB::WaitForFence(_vkDevice, { computeFence });
-            RB::ResetFences(_vkDevice, { computeFence });
             commandBuffer = GetComputeCommandBuffer(recordState);
         }
         break;
         case RT::CommandBufferType::Graphic:
         {
-            auto const graphicFence = GetGraphicFence(recordState);
-            RB::WaitForFence(_vkDevice, { graphicFence });
-            RB::ResetFences(_vkDevice, { graphicFence });
             commandBuffer = GetGraphicCommandBuffer(recordState);
         }
         break;
@@ -848,7 +849,6 @@ namespace MFA
             {
                 graphicWaitSemaphores.emplace_back(computeSemaphore);
             }
-            //std::vector<VkSemaphore> graphicWaitSemaphores{};
             std::vector<VkPipelineStageFlags> graphicWaitDstStageMask{
                 VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
                 VK_PIPELINE_STAGE_VERTEX_INPUT_BIT
@@ -856,7 +856,7 @@ namespace MFA
             std::vector<VkSemaphore> graphicSignalSemaphores{};
             if (hasComputeSubmission)
             {
-                //graphicSignalSemaphores.emplace_back(graphicSemaphore);
+                graphicSignalSemaphores.emplace_back(graphicSemaphore);
             }
 
             auto graphicCommandBuffer = GetGraphicCommandBuffer(recordState);
@@ -885,12 +885,14 @@ namespace MFA
 
     void LogicalDevice::Present(RT::CommandRecordState const & recordState, VkSwapchainKHR swapChain)
     {
+        const auto graphicSemaphore = GetGraphicSemaphore(recordState);
+        
         // Present drawn image
         // Note: semaphore here is not strictly necessary, because commands are processed in submission order within a single queue
         VkPresentInfoKHR presentInfo = {};
         presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
-        presentInfo.waitSemaphoreCount = 0;
-        presentInfo.pWaitSemaphores = nullptr;
+        presentInfo.waitSemaphoreCount = 1;
+        presentInfo.pWaitSemaphores = &graphicSemaphore;
         presentInfo.swapchainCount = 1;
         presentInfo.pSwapchains = &swapChain;
         presentInfo.pImageIndices = &recordState.imageIndex;

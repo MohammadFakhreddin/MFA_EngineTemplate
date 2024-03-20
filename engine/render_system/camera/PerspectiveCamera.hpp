@@ -1,10 +1,7 @@
 #pragma once
 
 #include "BedrockCommon.hpp"
-#include "BedrockMath.hpp"
 #include "BedrockRotation.hpp"
-
-#include <vec3.hpp>
 
 namespace MFA
 {

@@ -49,28 +49,30 @@ namespace MFA
 
     //-------------------------------------------------------------------------------------------------
 
-    void Rotation::SetEulerAngles(glm::vec3 const & eulerAngles)
+    bool Rotation::SetEulerAngles(glm::vec3 const & eulerAngles)
     {
         if (Memory::IsEqual(mEulerAngles, eulerAngles))
         {
-            return;
+            return false;
         }
         mEulerAngles = eulerAngles;
         mQuaternion = Math::ToQuat(eulerAngles);
         mMatrix = glm::toMat4(mQuaternion);
+        return true;
     }
 
     //-------------------------------------------------------------------------------------------------
 
-    void Rotation::SetQuaternion(glm::quat const & quaternion)
+    bool Rotation::SetQuaternion(glm::quat const & quaternion)
     {
         if (Math::IsEqual(mQuaternion, quaternion))
         {
-            return;
+            return false;
         }
         mQuaternion = quaternion;
         mEulerAngles = Math::ToEulerAngles(quaternion);
         mMatrix = glm::toMat4(mQuaternion);
+        return true;
     }
 
     //-------------------------------------------------------------------------------------------------

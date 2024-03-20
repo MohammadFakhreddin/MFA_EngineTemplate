@@ -3,6 +3,7 @@
 #include "AssetTexture.hpp"
 #include "ImportTexture.hpp"
 #include "BedrockAssert.hpp"
+#include "BedrockMath.hpp"
 
 #include "json.hpp"
 #include "stb_image.h"
@@ -163,6 +164,300 @@ namespace MFA::Importer
 
     //-------------------------------------------------------------------------------------------------
 
+    static void GLTF_extractNodes(
+        tinygltf::Model const & gltfModel,
+        Mesh * mesh
+    )
+    {
+        // Step3: Fill nodes
+        if (false == gltfModel.nodes.empty())
+        {
+            MFA_ASSERT(mesh != nullptr);
+            for (auto const & gltfNode : gltfModel.nodes)
+            {
+                Node & node = mesh->InsertNode();
+                node.name = gltfNode.name;
+                node.subMeshIndex = gltfNode.mesh;
+                node.children = gltfNode.children;
+                node.skin = gltfNode.skin;
+
+                if (gltfNode.translation.empty() == false)
+                {
+                    MFA_ASSERT(gltfNode.translation.size() == 3);
+                    glm::dvec3 translate{};
+                    Memory::Copy<3>(translate, gltfNode.translation.data());
+                    node.transform.Setposition(translate);
+                }
+
+                if (gltfNode.rotation.empty() == false)
+                {
+                    MFA_ASSERT(gltfNode.rotation.size() == 4);
+                    glm::dquat rotation{};
+                	Memory::Copy<4>(rotation, gltfNode.rotation.data());
+                    node.transform.SetQuaternion(rotation);
+                }
+
+                if (gltfNode.scale.empty() == false)
+                {
+                    MFA_ASSERT(gltfNode.scale.size() == 3);
+                    glm::dvec3 scale{};
+                	Memory::Copy<3>(scale, gltfNode.scale.data());
+                    node.transform.Setscale(scale);
+                }
+
+                if (gltfNode.matrix.empty() == false)
+                {
+                    glm::dmat4 extraTransform{};
+                    Memory::Copy<16>(node.transform, gltfNode.matrix.data());
+                    node.transform.SetextraTransform(extraTransform);
+                }
+            }
+        }
+    }
+    
+    //-------------------------------------------------------------------------------------------------
+    
+    template<typename ItemType>
+    static void GLTF_extractDataFromBuffer(
+        tinygltf::Model & gltfModel,
+        int const accessorIndex,
+        int const expectedComponentType,
+        ItemType const *& outData,
+        uint32_t & outDataCount
+    )
+    {
+        MFA_ASSERT(accessorIndex >= 0);
+        auto const & accessor = gltfModel.accessors[accessorIndex];
+        MFA_ASSERT(accessor.componentType == expectedComponentType);
+        auto const & bufferView = gltfModel.bufferViews[accessor.bufferView];
+        MFA_REQUIRE(bufferView.buffer < gltfModel.buffers.size());
+        auto const & buffer = gltfModel.buffers[bufferView.buffer];
+        outData = reinterpret_cast<ItemType const *>(
+            &buffer.data[bufferView.byteOffset + accessor.byteOffset]
+        );
+        outDataCount = static_cast<uint32_t>(accessor.count);
+    }
+
+    static void GLTF_extractDataAndTypeFromBuffer(
+        tinygltf::Model const & gltfModel,
+        int accessorIndex,
+        int expectedComponentType,
+        int & outType,
+        void const *& outData,
+        uint32_t & outDataCount
+    )
+    {
+        MFA_ASSERT(accessorIndex >= 0);
+        auto const & accessor = gltfModel.accessors[accessorIndex];
+        outType = accessor.type;
+        MFA_ASSERT(expectedComponentType == accessor.componentType);
+        auto const & bufferView = gltfModel.bufferViews[accessor.bufferView];
+        MFA_REQUIRE(bufferView.buffer < gltfModel.buffers.size());
+        auto const & buffer = gltfModel.buffers[bufferView.buffer];
+        outData = reinterpret_cast<void const *>(
+            &buffer.data[bufferView.byteOffset + accessor.byteOffset]
+        );
+        outDataCount = static_cast<uint32_t>(accessor.count);
+    }
+
+    //-------------------------------------------------------------------------------------------------
+
+    static void GLTF_extractSkins(
+        tinygltf::Model & gltfModel,
+        Mesh * mesh
+    )
+    {
+        MFA_ASSERT(mesh != nullptr);
+
+        for (auto const & gltfSkin : gltfModel.skins)
+        {
+            Skin & skin = mesh->InsertSkin();
+
+            // Joints
+            skin.joints.insert(skin.joints.end(), gltfSkin.joints.begin(), gltfSkin.joints.end());
+
+            // InverseBindMatrices
+            MFA_REQUIRE(gltfSkin.inverseBindMatrices >= 0);
+            uint32_t inverseBindMatricesCount = 0;
+            float const * inverseBindMatricesPtr = nullptr;
+            GLTF_extractDataFromBuffer(
+                gltfModel,
+                gltfSkin.inverseBindMatrices,
+                TINYGLTF_COMPONENT_TYPE_FLOAT,
+                inverseBindMatricesPtr,
+                inverseBindMatricesCount
+            );
+            MFA_ASSERT(inverseBindMatricesPtr != nullptr);
+            skin.inverseBindMatrices.resize(inverseBindMatricesCount);
+            for (size_t i = 0; i < skin.inverseBindMatrices.size(); ++i)
+            {
+                auto & currentMatrix = skin.inverseBindMatrices[i];
+                Memory::Copy<16>(currentMatrix, &inverseBindMatricesPtr[i * 16]);
+                //Matrix::CopyCellsToGlm(&inverseBindMatricesPtr[i * 16], currentMatrix);
+            }
+            MFA_ASSERT(skin.inverseBindMatrices.size() == skin.joints.size());
+            skin.skeletonRootNode = gltfSkin.skeleton;
+        }
+    }
+
+    //-------------------------------------------------------------------------------------------------
+
+    static void GLTF_extractAnimations(
+        tinygltf::Model & gltfModel,
+        Mesh * mesh
+    )
+    {
+        using Sampler = Animation::Sampler;
+        using Channel = Animation::Channel;
+        using Interpolation = Animation::Interpolation;
+        using Path = Animation::Path;
+
+        MFA_ASSERT(mesh != nullptr);
+
+        auto const convertInterpolationToEnum = [](char const * value)-> Interpolation
+        {
+            if (strcmp("LINEAR", value) == 0)
+            {
+                return Interpolation::Linear;
+            }
+            if (strcmp("STEP", value) == 0)
+            {
+                return Interpolation::Step;
+            }
+            if (strcmp("CUBICSPLINE", value) == 0)
+            {
+                return Interpolation::CubicSpline;
+            }
+            MFA_CRASH("Unhandled test case");
+            return Interpolation::Invalid;
+        };
+
+        auto const convertPathToEnum = [](char const * value)-> Path
+        {
+            if (strcmp("translation", value) == 0)
+            {
+                return Path::Translation;
+            }
+            if (strcmp("rotation", value) == 0)
+            {
+                return Path::Rotation;
+            }
+            if (strcmp("scale", value) == 0)
+            {
+                return Path::Scale;
+            }
+            MFA_CRASH("Unhandled test case");
+            return Path::Invalid;
+        };
+
+        for (auto const & gltfAnimation : gltfModel.animations)
+        {
+            Animation animation{};
+            animation.name = gltfAnimation.name;
+            // Samplers
+            for (auto const & gltfSampler : gltfAnimation.samplers)
+            {
+                Sampler sampler{};
+                sampler.interpolation = convertInterpolationToEnum(gltfSampler.interpolation.c_str());
+
+                {// Read sampler keyframe input time values
+                    float const * inputData = nullptr;
+                    uint32_t inputCount = 0;
+                    GLTF_extractDataFromBuffer(
+                        gltfModel,
+                        gltfSampler.input,
+                        TINYGLTF_COMPONENT_TYPE_FLOAT,
+                        inputData,
+                        inputCount
+                    );
+                    MFA_ASSERT(inputCount > 0);
+
+                    sampler.inputAndOutput.resize(inputCount);
+                    for (size_t index = 0; index < inputCount; index++)
+                    {
+                        auto const input = inputData[index];
+                        sampler.inputAndOutput[index].input = input;
+                        if (animation.startTime == -1.0f || animation.startTime > input)
+                        {
+                            animation.startTime = input;
+                        }
+                        if (animation.endTime == -1.0f || animation.endTime < input)
+                        {
+                            animation.endTime = input;
+                        }
+                    }
+                }
+
+                {// Read sampler keyframe output translate/rotate/scale values
+                    void const * outputData = nullptr;
+                    uint32_t outputCount = 0;
+                    int outputDataType = 0;
+                    GLTF_extractDataAndTypeFromBuffer(
+                        gltfModel,
+                        gltfSampler.output,
+                        TINYGLTF_COMPONENT_TYPE_FLOAT,
+                        outputDataType,
+                        outputData,
+                        outputCount
+                    );
+                    MFA_ASSERT(outputCount == sampler.inputAndOutput.size());
+
+                    struct Output3
+                    {
+                        float value[3];
+                    };
+
+                    struct Output4
+                    {
+                        float value[4];
+                    };
+
+                    switch (outputDataType)
+                    {
+                    case TINYGLTF_TYPE_VEC3:
+                    {
+                        auto const * output = static_cast<Output3 const *>(outputData);
+                        for (size_t index = 0; index < outputCount; index++)
+                        {
+                            Memory::Copy<3>(sampler.inputAndOutput[index].output, output[index].value);
+                        }
+                        break;
+                    }
+                    case TINYGLTF_TYPE_VEC4:
+                    {
+                        auto const * output = static_cast<Output4 const *>(outputData);
+                        for (size_t index = 0; index < outputCount; index++)
+                        {
+                            Memory::Copy<4>(sampler.inputAndOutput[index].output, output[index].value);
+                        }
+                        break;
+                    }
+                    default:
+                    {
+                        MFA_REQUIRE(false);
+                        break;
+                    }
+                    }
+                }
+                animation.samplers.emplace_back(sampler);
+            }
+
+            // Channels
+            for (auto const & gltfChannel : gltfAnimation.channels)
+            {
+                Channel channel{};
+                channel.path = convertPathToEnum(gltfChannel.target_path.c_str());
+                channel.samplerIndex = gltfChannel.sampler;
+                channel.nodeIndex = gltfChannel.target_node;
+                animation.channels.emplace_back(channel);
+            }
+            
+            mesh->InsertAnimation(animation);
+        }
+    }
+
+    //-------------------------------------------------------------------------------------------------
+
     static std::shared_ptr<Mesh> GLTF_extractSubMeshes(
         tinygltf::Model& gltfModel,
         std::vector<TextureRef> const& textureRefs
@@ -201,7 +496,7 @@ namespace MFA::Importer
             totalIndicesCount,
             Memory::AllocSize(sizeof(Vertex) * totalVerticesCount),
             Memory::AllocSize(sizeof(Index) * totalIndicesCount)
-            );
+        );
 
         // Step2: Fill subMeshes
         uint32_t primitiveUniqueId = 0;
@@ -227,7 +522,7 @@ namespace MFA::Importer
                     int32_t emissiveUvIndex = -1;
                     int16_t occlusionTextureIndex = -1;
                     int32_t occlusionUV_Index = -1;
-                    float baseColorFactor[4]{};
+                    float baseColorFactor[4]{1.0f, 1.0f, 1.0f, 1.0f};
                     float metallicFactor = 0;
                     float roughnessFactor = 0;
                     float emissiveFactor[3]{};
@@ -322,6 +617,7 @@ namespace MFA::Importer
                         }();
                         doubleSided = material.doubleSided;
                     }
+
                     uint32_t primitiveIndicesCount = 0;
                     {// Indices
                         MFA_REQUIRE(gltfPrimitive.indices < gltfModel.accessors.size());
@@ -885,7 +1181,12 @@ namespace MFA::Importer
                         return model;
                     }
                 }
-
+                // Nodes
+                GLTF_extractNodes(gltfModel, mesh.get());
+                // Fill skin
+                GLTF_extractSkins(gltfModel, mesh.get());
+                // Animation
+                GLTF_extractAnimations(gltfModel, mesh.get());
                 mesh->FinalizeData();
 
                 std::vector<std::shared_ptr<AS::Texture>> textures{};

@@ -75,11 +75,15 @@ namespace MFA::Math
 
     glm::mat4 Scale(float scale);
 
+    glm::dmat4 Scale(glm::dvec3 const& scale);
+
     void Translate(glm::mat4 & transform, float distance[3]);
 
     void Translate(glm::mat4 & transform, glm::vec3 const & distance);
 
     glm::mat4 Translate(glm::vec3 const& distance);
+
+    glm::dmat4 Translate(glm::dvec3 const& distance);
 
     void PerspectiveProjection(
         float outMatrix[16],

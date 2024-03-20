@@ -6,7 +6,25 @@
 namespace MFA::Asset::GLTF
 {
 
-	//-------------------------------------------------------------------------------------------------
+    //-------------------------------------------------------------------------------------------------
+
+    Node::Node() = default;
+
+    //-------------------------------------------------------------------------------------------------
+
+	bool Node::hasSubMesh() const noexcept
+	{
+        return subMeshIndex >= 0;
+	}
+
+    //-------------------------------------------------------------------------------------------------
+
+	bool Node::HasParent() const noexcept
+	{
+        return parent >= 0;
+	}
+
+    //-------------------------------------------------------------------------------------------------
 
 	Mesh::Mesh(
 		uint32_t const vertexCount,
@@ -65,6 +83,31 @@ namespace MFA::Asset::GLTF
                     MFA_LOG_ERROR("Unhandled primitive alpha mode detected %d", static_cast<int>(primitive.alphaMode));
                     break;
                 }
+            }
+        }
+
+        MFA_ASSERT(mData->nodes.empty() == false);
+        MFA_ASSERT(mData->rootNodes.empty() == true);
+
+        // Step one: Store parent index for each child
+        for (int i = 0; i < static_cast<int>(mData->nodes.size()); ++i)
+        {
+            auto const& currentNode = mData->nodes[i];
+            if (currentNode.children.empty() == false)
+            {
+                for (auto const child : currentNode.children)
+                {
+                    mData->nodes[child].parent = i;
+                }
+            }
+        }
+        // Step two: Cache parent nodes in a separate daa structure for faster access
+        for (uint32_t i = 0; i < static_cast<uint32_t>(mData->nodes.size()); ++i)
+        {
+            auto const& currentNode = mData->nodes[i];
+            if (currentNode.parent < 0)
+            {
+                mData->rootNodes.emplace_back(i);
             }
         }
 	}
@@ -149,6 +192,29 @@ namespace MFA::Asset::GLTF
         mIndicesStartingIndex += indicesCount;
         mVerticesStartingIndex += vertexCount;
 	}
+
+    //-------------------------------------------------------------------------------------------------
+
+    Node & Mesh::InsertNode() const
+    {
+        mData->nodes.emplace_back();
+        return mData->nodes.back();
+    }
+
+    //-------------------------------------------------------------------------------------------------
+
+    Skin & Mesh::InsertSkin() const
+    {
+        mData->skins.emplace_back();
+        return mData->skins.back();
+    }
+    
+    //-------------------------------------------------------------------------------------------------
+
+    void Mesh::InsertAnimation(Animation const & animation) const
+    {
+        mData->animations.emplace_back(animation);
+    }
 
 	//-------------------------------------------------------------------------------------------------
 
