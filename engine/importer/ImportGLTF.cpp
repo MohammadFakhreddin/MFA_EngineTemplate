@@ -208,7 +208,7 @@ namespace MFA::Importer
                 if (gltfNode.matrix.empty() == false)
                 {
                     glm::dmat4 extraTransform{};
-                    Memory::Copy<16>(node.transform, gltfNode.matrix.data());
+                    Memory::Copy<16>(extraTransform, gltfNode.matrix.data());
                     node.transform.SetextraTransform(extraTransform);
                 }
             }
