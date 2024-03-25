@@ -152,4 +152,8 @@ link_libraries(RenderSystem)
 
 add_subdirectory("${CMAKE_SOURCE_DIR}/executables/mesh-viewer")
 
+### MeshViewer ##############################################
+
+add_subdirectory("${CMAKE_SOURCE_DIR}/executables/in-game-text")
+
 #############################################################

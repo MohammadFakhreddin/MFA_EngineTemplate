@@ -86,7 +86,7 @@ int main()
 		.windowHeight = 1000,
 		.resizable = true,
 		.fullScreen = false,
-		.applicationName = "Demo-App"
+		.applicationName = "Mesh-Viewer-App"
 	};
 
 	auto const device = LogicalDevice::Instantiate(params);
@@ -101,7 +101,7 @@ int main()
 			swapChainResource,
 			depthResource,
 			msaaResource
-			);
+		);
 
 		auto const ui = std::make_shared<UI>(displayRenderPass);
 
