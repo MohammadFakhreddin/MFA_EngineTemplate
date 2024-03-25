@@ -2755,6 +2755,25 @@ namespace MFA::RenderBackend
 		    VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT
 	    );
     }
+    
+	//-------------------------------------------------------------------------------------------------
+
+    std::shared_ptr<RT::BufferGroup> CreateVertexBufferGroup(
+        VkDevice device,
+        VkPhysicalDevice physicalDevice,
+        VkDeviceSize const bufferSize,
+        int const bufferCount
+    )
+    {
+        return RB::CreateBufferGroup(
+            device, 
+            physicalDevice, 
+            bufferSize,
+            bufferCount,
+            VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
+            VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT
+        );
+    }
 
 	//-------------------------------------------------------------------------------------------------
 

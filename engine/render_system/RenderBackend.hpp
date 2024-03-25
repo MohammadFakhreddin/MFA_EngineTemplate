@@ -581,6 +581,13 @@ namespace MFA::RenderBackend
         VkDeviceSize bufferSize
     );
     
+    std::shared_ptr<RT::BufferGroup> CreateVertexBufferGroup(
+        VkDevice device,
+        VkPhysicalDevice physicalDevice,
+        VkDeviceSize const bufferSize,
+        int const bufferCount
+    );
+
     std::shared_ptr<RT::BufferAndMemory> CreateIndexBuffer(
         VkDevice device,
         VkPhysicalDevice physicalDevice,

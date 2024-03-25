@@ -4,6 +4,7 @@ set(LIBRARY_SOURCES)
 list(
     APPEND LIBRARY_SOURCES
 
+    "${CMAKE_CURRENT_SOURCE_DIR}/stb_image/stb_font_consolas_24_latin1.h"
     "${CMAKE_CURRENT_SOURCE_DIR}/stb_image/stb_image_resize.h"
     "${CMAKE_CURRENT_SOURCE_DIR}/stb_image/stb_image_write.h"
     "${CMAKE_CURRENT_SOURCE_DIR}/stb_image/stb_image.h"
