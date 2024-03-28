@@ -146,6 +146,12 @@ namespace MFA::Asset
             std::shared_ptr<Blob> const& data
         );
 
+        void addMipmap(
+            Dimensions const& dimension,
+            void * ptr,
+            size_t length
+        );
+
         [[nodiscard]]
         size_t mipOffsetInBytes(uint8_t mip_level, uint8_t slice_index = 0) const;
 

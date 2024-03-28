@@ -167,9 +167,9 @@ namespace MFA
         _fontSampler = RB::CreateSampler(
             LogicalDevice::Instance->GetVkDevice(),
             RB::CreateSamplerParams{
+                .maxAnisotropy = 1.0f,
                 .minLod = -1000,
                 .maxLod = 1000,
-                .maxAnisotropy = 1.0f,
             }
         );
 

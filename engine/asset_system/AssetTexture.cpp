@@ -101,12 +101,23 @@ namespace MFA::Asset
 		MFA_ASSERT(data->Ptr() != nullptr);
 		MFA_ASSERT(data->Len() > 0);
 
+		addMipmap(dimension, data->Ptr(), data->Len());
+	}
+
+	//-------------------------------------------------------------------------------------------------
+
+	void Texture::addMipmap(
+		Dimensions const & dimension,
+		void * dataPtr,
+		size_t dataLength
+	)
+	{
 		MFA_ASSERT(mPreviousMipWidth == -1 || mPreviousMipWidth > static_cast<int>(dimension.width));
 		MFA_ASSERT(mPreviousMipHeight == -1 || mPreviousMipHeight > static_cast<int>(dimension.height));
 		mPreviousMipWidth = static_cast<int>(dimension.width);
 		mPreviousMipHeight = static_cast<int>(dimension.height);
 
-		auto const dataLen = static_cast<uint32_t>(data->Len());
+		auto const dataLen = static_cast<uint32_t>(dataLength);
 		{
 			MipmapInfo mipmapInfo{};
 			mipmapInfo.offset = mCurrentOffset;
@@ -117,7 +128,7 @@ namespace MFA::Asset
 		uint64_t const nextOffset = mCurrentOffset + dataLen;
 		MFA_ASSERT(mBuffer->Ptr() != nullptr);
 		MFA_ASSERT(nextOffset <= mBuffer->Len());
-		memcpy(mBuffer->Ptr() + mCurrentOffset, data->Ptr(), data->Len());
+		memcpy(mBuffer->Ptr() + mCurrentOffset, dataPtr, dataLength);
 		mCurrentOffset = nextOffset;
 
 		++mMipCount;

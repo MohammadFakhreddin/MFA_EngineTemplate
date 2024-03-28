@@ -25,7 +25,11 @@ public:
 
 private:
 
-    void PrepareResources();
+    void CreateTextVertexBuffer();
+
+    void CreateFontTextureBuffer();
+
+    void CreateFontSampler();
 
     MFA::LogicalDevice * _device = nullptr;
 
@@ -42,4 +46,7 @@ private:
 
     stb_fontchar _stbFontData[STB_FONT_consolas_24_latin1_NUM_CHARS]{};
     std::unique_ptr<MFA::LocalBufferTracker<VertexData>> _vertexTracker{};
+
+    std::shared_ptr<MFA::RT::GpuTexture> _fontTexture{};
+    std::shared_ptr<MFA::RT::SamplerGroup> _fontSampler{};
 };

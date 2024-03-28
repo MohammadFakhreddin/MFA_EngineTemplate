@@ -637,13 +637,21 @@ namespace MFA::RenderBackend
 
     struct CreateSamplerParams
     {
-        float minLod = 0;  // Level of detail
-        float maxLod = 1;
-        bool anisotropyEnabled = true;
-        float maxAnisotropy = 16.0f;
+        VkFilter minFilter = VK_FILTER_LINEAR;
+        VkFilter magFilter = VK_FILTER_LINEAR;
         VkSamplerAddressMode addressModeU = VK_SAMPLER_ADDRESS_MODE_REPEAT;
         VkSamplerAddressMode addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT;
         VkSamplerAddressMode addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+        bool anisotropyEnabled = true;
+        float maxAnisotropy = 16.0f;
+        VkBorderColor borderColor = VK_BORDER_COLOR_FLOAT_TRANSPARENT_BLACK;
+        bool unnormalizedCoordinates = false;
+        bool compareEnable = true;                                          // It is disabled for mac.
+        VkCompareOp compareOp = VK_COMPARE_OP_ALWAYS;
+        float minLod = 0;  // Level of detail
+        float maxLod = 1;
+        VkSamplerMipmapMode mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
+        float mipLodBias = 0.0f;
     };
 
     [[nodiscard]]
