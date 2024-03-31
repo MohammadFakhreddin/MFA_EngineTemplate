@@ -21,6 +21,8 @@ InGameTextApp::InGameTextApp(std::shared_ptr<SwapChainRenderResource> swapChainR
     CreateTextVertexBuffer();
     CreateFontTextureBuffer();
     CreateFontSampler();
+    _pipeline = std::make_unique<TextOverlayPipeline>(_displayRenderPass, _fontSampler);
+    _descriptorSet = _pipeline->CreateDescriptorSet(*_fontTexture);
 }
 
 //------------------------------------------------------------------
@@ -34,7 +36,12 @@ InGameTextApp::~InGameTextApp()
 
 void InGameTextApp::Update(float deltaTimeSec)
 {
-
+    _letterCount = 0;
+    auto const screenWidth = LogicalDevice::Instance->GetWindowWidth();
+    auto const screenHeight = LogicalDevice::Instance->GetWindowHeight();
+    AddText("Hello", screenWidth * 0.5f, screenHeight * 0.5f, AddTextParams {
+        .textAlign = TextAlign::Center
+    });
 }
 
 //------------------------------------------------------------------
@@ -53,7 +60,26 @@ void InGameTextApp::Render(MFA::RT::CommandRecordState & recordState)
     	RT::CommandBufferType::Graphic
     );
 
+    _vertexTracker->Update(recordState);
+
     _displayRenderPass->Begin(recordState);
+
+    _pipeline->BindPipeline(recordState);
+    
+    RB::AutoBindDescriptorSet(
+        recordState,
+        RB::UpdateFrequency::PerPipeline,
+        _descriptorSet.descriptorSets[0]
+    );
+    
+    RB::BindVertexBuffer(recordState, *_vertexTracker->LocalBuffer().buffers[recordState.frameIndex]);
+
+    // One draw command for every character. This is okay for a debug overlay, but not optimal
+    // In a real-world application one would try to batch draw commands
+    for (uint32_t i = 0; i < _letterCount; i++) 
+    {
+        vkCmdDraw(recordState.commandBuffer, 4, 1, i * 4, 0);
+    }
 
     _displayRenderPass->End(recordState);
 
@@ -156,6 +182,86 @@ void InGameTextApp::CreateFontSampler()
         params
     );
     MFA_ASSERT(_fontSampler != nullptr);
+}
+
+//------------------------------------------------------------------
+
+void InGameTextApp::AddText(
+    std::string_view const & text, 
+    float x, 
+    float y, 
+    AddTextParams params
+)
+{
+    auto const windowWidth = static_cast<float>(LogicalDevice::Instance->GetWindowWidth());
+    auto const windowHeight = static_cast<float>(LogicalDevice::Instance->GetWindowHeight());
+
+    const uint32_t firstChar = STB_FONT_consolas_24_latin1_FIRST_CHAR;
+
+    auto & data = _vertexTracker->Data();
+    auto * mapped = &data.data[_letterCount * 4];
+    
+    const float charW = 1.5f * params.scale / windowWidth;
+    const float charH = 1.5f * params.scale / windowHeight;
+
+    float fbW = windowWidth;
+    float fbH = windowHeight;
+    x = (x / fbW * 2.0f) - 1.0f;
+    y = (y / fbH * 2.0f) - 1.0f;
+
+    // Calculate text width
+    float textWidth = 0;
+    for (auto letter : text)
+    {
+        stb_fontchar *charData = &_stbFontData[(uint32_t)letter - firstChar];
+        textWidth += charData->advance * charW;
+    }
+
+    switch (params.textAlign)
+    {
+        case TextAlign::Right:
+            x -= textWidth;
+            break;
+        case TextAlign::Center:
+            x -= textWidth / 2.0f;
+            break;
+        case TextAlign::Left:
+            break;
+    }
+
+    // Generate a uv mapped quad per char in the new text
+    for (auto letter : text)
+    {
+        stb_fontchar *charData = &_stbFontData[(uint32_t)letter - firstChar];
+
+        mapped->position.x = (x + (float)charData->x0 * charW);
+        mapped->position.y = (y + (float)charData->y0 * charH);
+        mapped->uv.x = charData->s0;
+        mapped->uv.y = charData->t0;
+        mapped++;
+
+        mapped->position.x = (x + (float)charData->x1 * charW);
+        mapped->position.y = (y + (float)charData->y0 * charH);
+        mapped->uv.x = charData->s1;
+        mapped->uv.y = charData->t0;
+        mapped++;
+
+        mapped->position.x = (x + (float)charData->x0 * charW);
+        mapped->position.y = (y + (float)charData->y1 * charH);
+        mapped->uv.x = charData->s0;
+        mapped->uv.y = charData->t1;
+        mapped++;
+
+        mapped->position.x = (x + (float)charData->x1 * charW);
+        mapped->position.y = (y + (float)charData->y1 * charH);
+        mapped->uv.x = charData->s1;
+        mapped->uv.y = charData->t1;
+        mapped++;
+
+        x += charData->advance * charW;
+
+        _letterCount++;
+    }
 }
 
 //------------------------------------------------------------------

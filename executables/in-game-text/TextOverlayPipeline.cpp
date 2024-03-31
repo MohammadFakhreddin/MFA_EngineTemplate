@@ -20,6 +20,7 @@ TextOverlayPipeline::TextOverlayPipeline(
 		LogicalDevice::Instance->GetVkDevice(),
 		1
 	);
+	CreateDescriptorLayout();
 	CreatePipeline();
 }
 
@@ -112,14 +113,14 @@ void TextOverlayPipeline::CreatePipeline()
 	// Vertex shader
 	{
 		bool success = Importer::CompileShaderToSPV(
-			Path::Instance->Get("in-game-text/shaders/TextOverlay.vert.hlsl"),
-			Path::Instance->Get("in-game-text/shaders/TextOverlay.vert.spv"),
+			Path::Instance->Get("in-game-text/TextOverlay.vert.hlsl"),
+			Path::Instance->Get("in-game-text/TextOverlay.vert.spv"),
 			"vert"
 		);
 		MFA_ASSERT(success == true);
 	}
 	auto cpuVertexShader = Importer::ShaderFromSPV(
-		Path::Instance->Get("in-game-text/shaders/TextOverlay.vert.spv"),
+		Path::Instance->Get("in-game-text/TextOverlay.vert.spv"),
 		VK_SHADER_STAGE_VERTEX_BIT,
 		"main"
 	);
@@ -160,7 +161,7 @@ void TextOverlayPipeline::CreatePipeline()
 	inputAttributeDescriptions.emplace_back(VkVertexInputAttributeDescription{
 		.location = static_cast<uint32_t>(inputAttributeDescriptions.size()),
 		.binding = 0,
-		.format = VK_FORMAT_R32G32B32_SFLOAT,
+		.format = VK_FORMAT_R32G32_SFLOAT,
 		.offset = offsetof(Vertex, position),
 	});
 	// UV
@@ -181,11 +182,12 @@ void TextOverlayPipeline::CreatePipeline()
 	pipelineOptions.frontFace = VK_FRONT_FACE_CLOCKWISE;
 	
 	// pipeline layout
+	std::vector<VkDescriptorSetLayout> setLayout{_descriptorLayout->descriptorSetLayout};
 	
 	const auto pipelineLayout = RB::CreatePipelineLayout(
 		LogicalDevice::Instance->GetVkDevice(),
-		1,
-		&_descriptorLayout->descriptorSetLayout,
+		setLayout.size(),
+		setLayout.data(),
 		0,
 		nullptr
 	);

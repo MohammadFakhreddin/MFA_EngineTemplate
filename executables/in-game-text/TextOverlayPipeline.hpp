@@ -26,12 +26,12 @@ public:
 
     void BindPipeline(MFA::RT::CommandRecordState& recordState) const;
 
+    MFA::RT::DescriptorSetGroup CreateDescriptorSet(MFA::RT::GpuTexture const & texture);
+
 private:
 
     void CreateDescriptorLayout();
     
-    MFA::RT::DescriptorSetGroup CreateDescriptorSet(MFA::RT::GpuTexture const & texture);
-
     void CreatePipeline();
     
     std::shared_ptr<MFA::DisplayRenderPass> _displayRenderPass{};

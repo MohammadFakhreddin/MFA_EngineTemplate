@@ -94,6 +94,19 @@ namespace MFA
             mDirtyCounter = LogicalDevice::Instance->GetMaxFramePerFlight();
         }
 
+        [[nodiscard]]
+        T & Data()
+        {
+            // Returns the data and resets the counter.
+            mDirtyCounter = LogicalDevice::Instance->GetMaxFramePerFlight();
+            return mData;
+        }
+
+        RT::BufferGroup const & LocalBuffer() const
+        {
+            return *mLocalBuffer;
+        }
+
     private:
 
         std::shared_ptr<RT::BufferGroup> mLocalBuffer{};
