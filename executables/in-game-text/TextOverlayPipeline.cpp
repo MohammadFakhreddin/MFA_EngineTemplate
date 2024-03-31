@@ -18,9 +18,41 @@ TextOverlayPipeline::TextOverlayPipeline(
 {
 	_descriptorPool = RB::CreateDescriptorPool(
 		LogicalDevice::Instance->GetVkDevice(),
-		1                                       // TODO: Check this value again
+		1
 	);
 	CreatePipeline();
+}
+
+//-------------------------------------------------------------------------------------------------
+
+TextOverlayPipeline::~TextOverlayPipeline()
+{
+	_pipeline = nullptr;
+	_descriptorLayout = nullptr;
+	_descriptorPool = nullptr;
+}
+
+//-------------------------------------------------------------------------------------------------
+
+bool TextOverlayPipeline::IsBinded(RT::CommandRecordState const& recordState) const
+{
+	if (recordState.pipeline == _pipeline.get())
+	{
+		return true;
+	}
+	return false;
+}
+
+//-------------------------------------------------------------------------------------------------
+
+void TextOverlayPipeline::BindPipeline(RT::CommandRecordState& recordState) const
+{
+	if (IsBinded(recordState))
+	{
+		return;
+	}
+
+	RB::BindPipeline(recordState, *_pipeline);
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -47,10 +79,7 @@ void TextOverlayPipeline::CreateDescriptorLayout()
 
 //-------------------------------------------------------------------------------------------------
 
-RT::DescriptorSetGroup TextOverlayPipeline::CreateDescriptorSet(
-	RT::SamplerGroup const & sampler, 
-	RT::GpuTexture const & texture
-)
+RT::DescriptorSetGroup TextOverlayPipeline::CreateDescriptorSet(RT::GpuTexture const & texture)
 {
 	auto descriptorSetGroup = RB::CreateDescriptorSet(
 		LogicalDevice::Instance->GetVkDevice(),
@@ -65,7 +94,7 @@ RT::DescriptorSetGroup TextOverlayPipeline::CreateDescriptorSet(
 	DescriptorSetSchema schema { descriptorSet };
 	
 	VkDescriptorImageInfo info {
-		.sampler = sampler.sampler,
+		.sampler = _sampler->sampler,
 		.imageView = texture.imageView->imageView,
 		.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
 	};
@@ -141,46 +170,41 @@ void TextOverlayPipeline::CreatePipeline()
 		.format = VK_FORMAT_R32G32_SFLOAT,
 		.offset = offsetof(Vertex, uv),
 	});
-	// TODO: Start from there check the setting
-	// RB::CreateGraphicPipelineOptions pipelineOptions{};
-	// pipelineOptions.useStaticViewportAndScissor = false;
-	// pipelineOptions.primitiveTopology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP;
-	// // TODO I think we should submit each pipeline . Each one should have independent depth buffer 
-	// pipelineOptions.rasterizationSamples = LogicalDevice::Instance->GetMaxSampleCount();            // TODO Find a way to set sample count to 1. We only need MSAA for pbr-pipeline
-	// pipelineOptions.cullMode = _params.cullModeFlags;
-	// pipelineOptions.colorBlendAttachments.blendEnable = VK_TRUE;
-	// pipelineOptions.polygonMode = _params.polygonMode;
-	// pipelineOptions
-
-	// // pipeline layout
-	// std::vector<VkDescriptorSetLayout> descriptorSetLayouts{
-	// 	mPerPipelineDescriptorLayout->descriptorSetLayout,
-	// 	mPerGeometryDescriptorLayout->descriptorSetLayout
-	// };
+	// TODO: Some settings are missing
+	RB::CreateGraphicPipelineOptions pipelineOptions{};
+	pipelineOptions.useStaticViewportAndScissor = false;
+	pipelineOptions.primitiveTopology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP;
+	pipelineOptions.rasterizationSamples = LogicalDevice::Instance->GetMaxSampleCount();            // TODO Find a way to set sample count to 1. We only need MSAA for pbr-pipeline
+	pipelineOptions.cullMode = VK_CULL_MODE_BACK_BIT;
+	pipelineOptions.colorBlendAttachments.blendEnable = VK_TRUE;
+	pipelineOptions.polygonMode = VK_POLYGON_MODE_FILL;
+	pipelineOptions.frontFace = VK_FRONT_FACE_CLOCKWISE;
 	
-	// const auto pipelineLayout = RB::CreatePipelineLayout(
-	// 	LogicalDevice::Instance->GetVkDevice(),
-	// 	static_cast<uint32_t>(descriptorSetLayouts.size()),
-	// 	descriptorSetLayouts.data(),
-	// 	static_cast<uint32_t>(pushConstantRanges.size()),
-	// 	pushConstantRanges.data()
-	// );
+	// pipeline layout
+	
+	const auto pipelineLayout = RB::CreatePipelineLayout(
+		LogicalDevice::Instance->GetVkDevice(),
+		1,
+		&_descriptorLayout->descriptorSetLayout,
+		0,
+		nullptr
+	);
 
-	// auto surfaceCapabilities = LogicalDevice::Instance->GetSurfaceCapabilities();
+	auto surfaceCapabilities = LogicalDevice::Instance->GetSurfaceCapabilities();
 
-	// mPipeline = RB::CreateGraphicPipeline(
-	// 	LogicalDevice::Instance->GetVkDevice(),
-	// 	static_cast<uint8_t>(shaders.size()),
-	// 	shaders.data(),
-	// 	1,
-	// 	&bindingDescription,
-	// 	static_cast<uint8_t>(inputAttributeDescriptions.size()),
-	// 	inputAttributeDescriptions.data(),
-	// 	surfaceCapabilities.currentExtent,
-	// 	mDisplayRenderPass->GetVkRenderPass(),
-	// 	pipelineLayout,
-	// 	pipelineOptions
-	// );
+	_pipeline = RB::CreateGraphicPipeline(
+		LogicalDevice::Instance->GetVkDevice(),
+		static_cast<uint8_t>(shaders.size()),
+		shaders.data(),
+		1,
+		&bindingDescription,
+		static_cast<uint8_t>(inputAttributeDescriptions.size()),
+		inputAttributeDescriptions.data(),
+		surfaceCapabilities.currentExtent,
+		_displayRenderPass->GetVkRenderPass(),
+		pipelineLayout,
+		pipelineOptions
+	);
 }
 
 //-------------------------------------------------------------------------------------------------
