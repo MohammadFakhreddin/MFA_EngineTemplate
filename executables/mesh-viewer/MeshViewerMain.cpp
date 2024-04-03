@@ -181,10 +181,10 @@ int main()
 		glm::mat4 submarineModelMat{};
 		{
 			auto const scale = glm::scale(glm::identity<glm::mat4>(), { 0.02f, 0.02f, 0.02f });
-			auto const rotation1 = glm::angleAxis(glm::radians(180.0f), MFA::Math::UpVec3);
-			auto const rotation2 = glm::angleAxis(glm::radians(-90.0f), MFA::Math::RightVec3);
-			auto const rotation3 = glm::angleAxis(glm::radians(0.0f), MFA::Math::UpVec3);
-			submarineModelMat = glm::toMat4(rotation3) * glm::toMat4(rotation2) * glm::toMat4(rotation1) * scale;
+			// auto const rotation1 = glm::angleAxis(glm::radians(180.0f), MFA::Math::UpVec3);
+			// auto const rotation2 = glm::angleAxis(glm::radians(-90.0f), MFA::Math::RightVec3);
+			// auto const rotation3 = glm::angleAxis(glm::radians(0.0f), MFA::Math::UpVec3);
+			submarineModelMat = /*glm::toMat4(rotation3) * glm::toMat4(rotation2) * glm::toMat4(rotation1) * */scale;
 		}
 		
 		const uint32_t MinDeltaTimeMs = 1000 / 60;

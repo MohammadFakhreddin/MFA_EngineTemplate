@@ -39,9 +39,8 @@ void InGameTextApp::Update(float deltaTimeSec)
     _letterCount = 0;
     auto const screenWidth = LogicalDevice::Instance->GetWindowWidth();
     auto const screenHeight = LogicalDevice::Instance->GetWindowHeight();
-    AddText("Hello", screenWidth * 0.5f, screenHeight * 0.5f, AddTextParams {
-        .textAlign = TextAlign::Center
-    });
+    AddText("Hello", screenWidth * 0.5f, screenHeight * 0.5f, AddTextParams {.textAlign = TextAlign::Center});
+    AddText("Text overlay test", 0, 0, AddTextParams {.textAlign = TextAlign::Left});
 }
 
 //------------------------------------------------------------------
@@ -76,10 +75,11 @@ void InGameTextApp::Render(MFA::RT::CommandRecordState & recordState)
 
     // One draw command for every character. This is okay for a debug overlay, but not optimal
     // In a real-world application one would try to batch draw commands
-    for (uint32_t i = 0; i < _letterCount; i++) 
-    {
-        vkCmdDraw(recordState.commandBuffer, 4, 1, i * 4, 0);
-    }
+    // for (uint32_t i = 0; i < _letterCount; i++) 
+    // {
+    //     vkCmdDraw(recordState.commandBuffer, 4, 1, i * 4, 0);
+    // }
+    vkCmdDraw(recordState.commandBuffer, _letterCount * 4, 1, 0, 0);
 
     _displayRenderPass->End(recordState);
 
