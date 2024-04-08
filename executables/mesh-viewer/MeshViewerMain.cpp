@@ -114,11 +114,11 @@ int main()
 
 		ArcballCamera camera{};
 		camera.Setposition({ 0.0f, -1.0f, 15.0f });
-		
-		auto cameraBufferTracker = std::make_shared<HostVisibleBufferTracker<glm::mat4>>(cameraBuffer, camera.GetViewProjection());
+
+		auto cameraBufferTracker = std::make_shared<HostVisibleBufferTracker>(cameraBuffer, Alias{ camera.GetViewProjection() });
 
 		device->ResizeEventSignal2.Register([&cameraBufferTracker, &camera]()->void {
-			cameraBufferTracker->SetData(camera.GetViewProjection());
+			cameraBufferTracker->SetData(Alias{ camera.GetViewProjection() });
 		});
 
 		auto defaultSampler = RB::CreateSampler(LogicalDevice::Instance->GetVkDevice(), {});
@@ -214,7 +214,7 @@ int main()
 			camera.Update(deltaTimeSec);
 			if (camera.IsDirty())
 			{
-				cameraBufferTracker->SetData(camera.GetViewProjection());
+				cameraBufferTracker->SetData(Alias{ camera.GetViewProjection() });
 			}
 
 			ui->Update();

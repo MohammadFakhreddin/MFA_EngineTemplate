@@ -1,117 +1,63 @@
 #pragma once
 
-#include "LogicalDevice.hpp"
+#include "BedrockAssert.hpp"
 #include "RenderBackend.hpp"
 #include "RenderTypes.hpp"
 
 namespace MFA
 {
-    template<typename T>
     struct HostVisibleBufferTracker
     {
     public:
 
-        explicit HostVisibleBufferTracker(std::shared_ptr<RT::BufferGroup> bufferGroup, T data)
-            : mBufferGroup(std::move(bufferGroup))
-            , mData(data)
-        {
-            
-            for (auto const& buffer : mBufferGroup->buffers)
-            {
-                RB::UpdateHostVisibleBuffer(
-                    LogicalDevice::Instance->GetVkDevice(),
-                    *buffer,
-                    Alias(mData)
-                );
-            }
-            mDirtyCounter = 0;
-        }
+        explicit HostVisibleBufferTracker(std::shared_ptr<RT::BufferGroup> bufferGroup, Alias const & data);
 
-        void Update(RT::CommandRecordState const & recordState)
-        {
-            if (mDirtyCounter > 0)
-            {
-                RB::UpdateHostVisibleBuffer(
-                    LogicalDevice::Instance->GetVkDevice(),
-                    *mBufferGroup->buffers[recordState.frameIndex],
-                    Alias(mData)
-                );
-                --mDirtyCounter;
-            }
-        }
+        explicit HostVisibleBufferTracker(std::shared_ptr<RT::BufferGroup> bufferGroup);
 
-        void SetData(T data)
-        {
-            mData = data;
-            mDirtyCounter = LogicalDevice::Instance->GetMaxFramePerFlight();
-        }
+        void Update(RT::CommandRecordState const & recordState);
+
+        void SetData(Alias const & data);
+
+        [[nodiscard]]
+        uint8_t * Data();
+
+        RT::BufferGroup const & HostVisibleBuffer();
 
     private:
         
         std::shared_ptr<RT::BufferGroup> mBufferGroup;
         int mDirtyCounter = 0;
-        T mData {};
+        std::unique_ptr<Blob> mData {};
     };
 
     // Only use it for the data that is frequently updated
-    template<typename T>
     struct LocalBufferTracker
     {
     public:
 
         explicit LocalBufferTracker(
             std::shared_ptr<RT::BufferGroup> localBuffer,
-            std::shared_ptr<RT::BufferGroup> hostVisibleBuffer,
-            T data 
-        )
-            : mLocalBuffer(std::move(localBuffer))
-            , mHostVisibleBuffer(hostVisibleBuffer)
-        {
-            SetData(data);
-        }
+            std::shared_ptr<RT::BufferGroup> hostVisibleBuffer
+        );
 
-        void Update(RT::CommandRecordState const & recordState)
-        {
-            if (mDirtyCounter > 0)
-            {
-                RB::UpdateHostVisibleBuffer(
-                    LogicalDevice::Instance->GetVkDevice(),
-                    *mHostVisibleBuffer->buffers[recordState.frameIndex],
-                    Alias(mData)
-                );
-                RB::UpdateLocalBuffer(
-                    recordState.commandBuffer,
-                    *mLocalBuffer->buffers[recordState.frameIndex],
-                    *mHostVisibleBuffer->buffers[recordState.frameIndex]
-                );
-                --mDirtyCounter;
-            }
-        }
+        void Update(RT::CommandRecordState const & recordState);
 
-        void SetData(T data)
-        {
-            mData = data;
-            mDirtyCounter = LogicalDevice::Instance->GetMaxFramePerFlight();
-        }
+        void SetData(Alias const & data);
 
         [[nodiscard]]
-        T & Data()
-        {
-            // Returns the data and resets the counter.
-            mDirtyCounter = LogicalDevice::Instance->GetMaxFramePerFlight();
-            return mData;
-        }
+        uint8_t * Data();
 
-        RT::BufferGroup const & LocalBuffer() const
-        {
-            return *mLocalBuffer;
-        }
+        [[nodiscard]]
+        RT::BufferGroup const & HostVisibleBuffer() const;
+
+        [[nodiscard]]
+        RT::BufferGroup const & LocalBuffer() const;
 
     private:
 
         std::shared_ptr<RT::BufferGroup> mLocalBuffer{};
         std::shared_ptr<RT::BufferGroup> mHostVisibleBuffer{};
         int mDirtyCounter = 0;
-        T mData{};
+        std::unique_ptr<Blob> mData {};
     };
 }

@@ -315,7 +315,7 @@ namespace MFA::Importer
                 slices,
                 currentMipDims
             );
-            auto const mipMapPixels = Memory::AllocSize(currentMipSizeBytes);
+            std::shared_ptr<Blob> mipMapPixels = Memory::AllocSize(currentMipSizeBytes);
 
             // Resize
             ResizeInputParams inputParams{

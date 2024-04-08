@@ -25,7 +25,7 @@ namespace MFA
 
 	//-------------------------------------------------------------------------------------------------
 
-	glm::mat4 PerspectiveCamera::GetViewProjection()
+	glm::mat4 const & PerspectiveCamera::GetViewProjection()
 	{
 		if (_isViewDirty)
 		{
@@ -50,7 +50,7 @@ namespace MFA
 
 	//-------------------------------------------------------------------------------------------------
 
-	glm::mat4 PerspectiveCamera::GetView()
+	glm::mat4 const & PerspectiveCamera::GetView()
 	{
 		if (_isViewDirty == true)
 		{
@@ -62,7 +62,7 @@ namespace MFA
 
 	//-------------------------------------------------------------------------------------------------
 
-	glm::mat4 PerspectiveCamera::GetProjection()
+	glm::mat4 const & PerspectiveCamera::GetProjection()
 	{
 		if (_isProjectionDirty == true)
 		{

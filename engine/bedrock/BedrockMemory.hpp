@@ -56,14 +56,27 @@ namespace MFA
         }
 
         template<typename T>
+        explicit Alias(T const * ptr, size_t const count)
+        {
+            _len = sizeof(T) * count;
+            _ptr = reinterpret_cast<uint8_t*>(const_cast<T *>(ptr));
+        }
+
+        template<typename T>
         explicit Alias(T & data)
         {
             _len = sizeof(T);
             _ptr = reinterpret_cast<uint8_t *>(&data);
         }
 
-        ~Alias() = default;
+        template<typename T>
+        explicit Alias(T const & data)
+        {
+            _len = sizeof(T);
+            _ptr = reinterpret_cast<uint8_t*>(const_cast<T *>(&data));
+        }
 
+        ~Alias() = default;
     };
 
     class Blob : public BaseBlob
@@ -105,28 +118,32 @@ namespace MFA
             std::free(_ptr);
     	}
 
+        operator Alias() const {
+            return Alias(_ptr, _len);
+        }
+
     };
 
     namespace Memory
     {
         [[nodiscard]]
-        inline std::shared_ptr<Blob> AllocSize(size_t const len)
+        inline std::unique_ptr<Blob> AllocSize(size_t const len)
         {
-            return std::make_shared<Blob>(len);
+            return std::make_unique<Blob>(len);
         }
 
         template<typename T>
         [[nodiscard]]
-        inline std::shared_ptr<Blob> Alloc(T * ptr, size_t const count)
+        inline std::unique_ptr<Blob> Alloc(T * ptr, size_t const count)
         {
-            return std::make_shared<Blob>(ptr, count);
+            return std::make_unique<Blob>(ptr, count);
         }
 
         template<typename T>
         [[nodiscard]]
-        inline std::shared_ptr<Blob> Alloc(T const & data)
+        inline std::unique_ptr<Blob> Alloc(T const & data)
         {
-            return std::make_shared<Blob>(data, true);
+            return std::make_unique<Blob>(data, true);
         }
 
         template<uint32_t Count, typename B, typename A>
@@ -230,4 +247,4 @@ namespace MFA
 
     }
 
-};
+}

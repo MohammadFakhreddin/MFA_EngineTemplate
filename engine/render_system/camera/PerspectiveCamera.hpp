@@ -13,12 +13,12 @@ namespace MFA
 		~PerspectiveCamera();
 
 		[[nodiscard]]
-		glm::mat4 GetViewProjection();
+		glm::mat4 const & GetViewProjection();
 
 		[[nodiscard]]
-		glm::mat4 GetView();
+		glm::mat4 const & GetView();
 
-		glm::mat4 GetProjection();
+		glm::mat4 const & GetProjection();
 
 		[[nodiscard]]
 		bool IsDirty() const;

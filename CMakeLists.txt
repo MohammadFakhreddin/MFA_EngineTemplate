@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION VERSION 3.16.0)
 
-project ("CrazyTankGameProject" C CXX)
+project ("MFA_EngineTemplate" C CXX)
 
 set_property (GLOBAL PROPERTY USE_FOLDERS ON)
 

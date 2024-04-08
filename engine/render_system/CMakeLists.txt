@@ -14,6 +14,7 @@ list(
     "${CMAKE_CURRENT_SOURCE_DIR}/DescriptorSetSchema.hpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/DescriptorSetSchema.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/BufferTracker.hpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/BufferTracker.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/UI.hpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/UI.cpp"
 
@@ -39,6 +40,8 @@ list(
     "${CMAKE_CURRENT_SOURCE_DIR}/pipeline/FlatShadingPipeline.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/pipeline/BlinnPhongPipeline.hpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/pipeline/BlinnPhongPipeline.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/pipeline/TextOverlayPipeline.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/pipeline/TextOverlayPipeline.hpp"
     
     "${CMAKE_CURRENT_SOURCE_DIR}/camera/PerspectiveCamera.hpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/camera/PerspectiveCamera.cpp"
@@ -51,6 +54,8 @@ list(
     "${CMAKE_CURRENT_SOURCE_DIR}/utils/LineRenderer.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/utils/PointRenderer.hpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/utils/PointRenderer.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/utils/ConsolasFontRenderer.hpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/utils/ConsolasFontRenderer.cpp"
     
     "${CMAKE_CURRENT_SOURCE_DIR}/utils/MeshRenderer.hpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/utils/MeshRenderer.cpp"
