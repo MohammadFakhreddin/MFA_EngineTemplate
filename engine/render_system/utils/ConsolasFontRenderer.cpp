@@ -35,7 +35,7 @@ namespace MFA
         );
 
         std::unique_ptr<TextData> textData = std::make_unique<TextData>(TextData{
-            .letterCount = 0,
+            .letterRange = {},
             .vertexData = LocalBufferTracker(vertexBuffer, vertexStageBuffer),
             .maxLetterCount = maxCharCount
         });
@@ -58,8 +58,10 @@ namespace MFA
         auto const windowHeight = static_cast<float>(LogicalDevice::Instance->GetWindowHeight());
 
         const uint32_t firstChar = STB_FONT_consolas_24_latin1_FIRST_CHAR;
+
+        int letterRange = inOutData.letterRange.empty() == false ? inOutData.letterRange.back() : 0;
         
-        auto * mapped = &reinterpret_cast<TextOverlayPipeline::Vertex*>(inOutData.vertexData->Data())[inOutData.letterCount * 4];
+        auto * mapped = &reinterpret_cast<TextOverlayPipeline::Vertex*>(inOutData.vertexData->Data())[letterRange * 4];
         
         const float charW = 1.5f * params.scale / windowWidth;
         const float charH = 1.5f * params.scale / windowHeight;
@@ -89,12 +91,15 @@ namespace MFA
                 break;
         }
 
+        bool success = true;
+
         // Generate a uv mapped quad per char in the new text
         for (auto letter : text)
         {
-            if (inOutData.letterCount + 1 >= inOutData.maxLetterCount)
+            if (letterRange + 1 >= inOutData.maxLetterCount)
             {
-                return false;
+                success = false;
+                break;
             }
 
             stb_fontchar *charData = &_stbFontData[(uint32_t)letter - firstChar];
@@ -125,24 +130,26 @@ namespace MFA
 
             x += charData->advance * charW;
 
-            inOutData.letterCount++;
+            letterRange++;
         }
 
-        return true;
+        inOutData.letterRange.emplace_back(letterRange);
+
+        return success;
     }
 
     //------------------------------------------------------------------
 
     void ConsolasFontRenderer::ResetText(TextData & inOutData)
     {
-        inOutData.letterCount = 0;
+        inOutData.letterRange.clear();
     }
 
     //------------------------------------------------------------------
 
     void ConsolasFontRenderer::Draw(
         RT::CommandRecordState& recordState,
-        TextData & data
+        TextData& data
     ) const
     {
         _pipeline->BindPipeline(recordState);
@@ -155,7 +162,13 @@ namespace MFA
 
         RB::BindVertexBuffer(recordState, *data.vertexData->LocalBuffer().buffers[recordState.frameIndex]);
 
-        vkCmdDraw(recordState.commandBuffer, data.letterCount * 4, 1, 0, 0);
+        int previousLetterRange = 0;
+        for (auto const& letterRange : data.letterRange)
+        {
+            int const currentLetterRange = letterRange * 4;
+            vkCmdDraw(recordState.commandBuffer, currentLetterRange - previousLetterRange, 1, previousLetterRange, 0);
+            previousLetterRange = currentLetterRange;
+        }
     }
 
     //------------------------------------------------------------------

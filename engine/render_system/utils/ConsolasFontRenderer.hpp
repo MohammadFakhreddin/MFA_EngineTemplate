@@ -14,7 +14,7 @@ namespace MFA
 
         struct TextData
         {
-            int letterCount{};
+            std::vector<int> letterRange{};
             std::optional<LocalBufferTracker> vertexData = std::nullopt;
             const int maxLetterCount;
         };
