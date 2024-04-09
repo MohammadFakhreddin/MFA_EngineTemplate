@@ -113,14 +113,14 @@ void TextOverlayPipeline::CreatePipeline()
 	// Vertex shader
 	{
 		bool success = Importer::CompileShaderToSPV(
-			Path::Instance->Get("in-game-text/TextOverlay.vert.hlsl"),
-			Path::Instance->Get("in-game-text/TextOverlay.vert.spv"),
+			Path::Instance->Get("engine/shaders/text_overlay_pipeline/TextOverlay.vert.hlsl"),
+			Path::Instance->Get("engine/shaders/text_overlay_pipeline/TextOverlay.vert.spv"),
 			"vert"
 		);
 		MFA_ASSERT(success == true);
 	}
 	auto cpuVertexShader = Importer::ShaderFromSPV(
-		Path::Instance->Get("in-game-text/TextOverlay.vert.spv"),
+		Path::Instance->Get("engine/shaders/text_overlay_pipeline/TextOverlay.vert.spv"),
 		VK_SHADER_STAGE_VERTEX_BIT,
 		"main"
 	);
@@ -132,14 +132,14 @@ void TextOverlayPipeline::CreatePipeline()
 	// Fragment shader
 	{
 		bool success = Importer::CompileShaderToSPV(
-			Path::Instance->Get("in-game-text/TextOverlay.frag.hlsl"),
-			Path::Instance->Get("in-game-text/TextOverlay.frag.spv"),
+			Path::Instance->Get("engine/shaders/text_overlay_pipeline/TextOverlay.frag.hlsl"),
+			Path::Instance->Get("engine/shaders/text_overlay_pipeline/TextOverlay.frag.spv"),
 			"frag"
 		);
 		MFA_ASSERT(success == true);
 	}
 	auto cpuFragmentShader = Importer::ShaderFromSPV(
-		Path::Instance->Get("in-game-text/TextOverlay.frag.spv"),
+		Path::Instance->Get("engine/shaders/text_overlay_pipeline/TextOverlay.frag.spv"),
 		VK_SHADER_STAGE_FRAGMENT_BIT,
 		"main"
 	);

@@ -280,7 +280,7 @@ namespace MFA::RenderBackend
     )
     {
         //https://stackoverflow.com/questions/61603693/sdl2-does-not-see-joystick-but-os-does
-        SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS | SDL_INIT_JOYSTICK);
+        SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS | SDL_INIT_JOYSTICK | SDL_INIT_AUDIO);
         auto * window = SDL_CreateWindow(
             windowName.c_str(),
             posX,

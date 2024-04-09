@@ -94,10 +94,17 @@ include_directories("${CMAKE_CURRENT_SOURCE_DIR}/engine/libs/libconfig/stb_image
 include_directories("${CMAKE_CURRENT_SOURCE_DIR}/engine/libs/libconfig/nlohmann")
 include_directories("${CMAKE_CURRENT_SOURCE_DIR}/engine/libs/libconfig/tiny_gltf_loader")
 
-## SDL ###################################################
+## SDL2 ###################################################
 
 add_subdirectory("${CMAKE_SOURCE_DIR}/submodules/SDL2")
 include_directories("${CMAKE_SOURCE_DIR}/submodules/SDL2/include")
+
+## SDL2_mixer ############################################
+
+set(BUILD_SHARED_LIBS OFF)
+set(SDL2MIXER_WAVPACK OFF)
+add_subdirectory("${CMAKE_SOURCE_DIR}/submodules/SDL2_mixer")
+include_directories("${CMAKE_SOURCE_DIR}/submodules/SDL2_mixer/include")
 
 ### Linking libraries ####################################
 
@@ -109,6 +116,7 @@ link_libraries(glm)
 link_libraries(Vulkan::Vulkan)
 link_libraries(SDL2-static)
 link_libraries(LibConfig)
+link_libraries(SDL2_mixer)
 
 ### Bedrock #################################################
 

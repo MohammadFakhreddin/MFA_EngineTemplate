@@ -1,5 +1,7 @@
 #pragma once
 
+#include <SDL_mixer.h>
+
 #include "RenderTypes.hpp"
 #include "LogicalDevice.hpp"
 #include "render_resource/SwapChainRenderResource.hpp"
@@ -25,6 +27,10 @@ private:
 
     void CreateFontSampler();
 
+    void SetupAudio();
+
+    void OnSDL_Event(SDL_Event * event);
+
     MFA::LogicalDevice * _device = nullptr;
 
     std::shared_ptr<MFA::DepthRenderResource> _depthResource{};
@@ -38,5 +44,14 @@ private:
     std::shared_ptr<MFA::RT::SamplerGroup> _fontSampler{};
 
     std::unique_ptr<MFA::ConsolasFontRenderer::TextData> _textData{};
+
+    //The music that will be played
+    Mix_Music * _music = nullptr;
+
+    //The sound effects that will be used
+    Mix_Chunk * _scratchAudio = nullptr;
+    Mix_Chunk * _highAudio = nullptr;
+    Mix_Chunk * _mediumAudio = nullptr;
+    Mix_Chunk * _lowAudio = nullptr;
 
 };

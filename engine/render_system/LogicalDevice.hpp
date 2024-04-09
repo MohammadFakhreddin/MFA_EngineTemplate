@@ -19,6 +19,7 @@ namespace MFA
             bool resizable = true;
             bool fullScreen = false;
             std::string applicationName {};
+            // TODO: Maybe expose the sdl flags to support video and audio
         };
 
         [[nodiscard]]

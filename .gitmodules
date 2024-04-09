@@ -10,3 +10,7 @@
 	path = submodules/Vulkan-Loader
 	url = https://github.com/KhronosGroup/Vulkan-Loader.git
 	branch = sdk-1.3.261
+[submodule "submodules/SDL2_mixer"]
+	path = submodules/SDL2_mixer
+	url = https://github.com/libsdl-org/SDL_mixer.git
+	branch = SDL2
