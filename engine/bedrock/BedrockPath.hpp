@@ -11,7 +11,7 @@ namespace MFA
 
 		inline static Path * Instance = nullptr;
 
-		static std::shared_ptr<Path> Instantiate();
+		static std::unique_ptr<Path> Instantiate();
 
 		explicit Path();
 

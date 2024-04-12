@@ -12,9 +12,9 @@
 
 //-------------------------------------------------------------------------------------------------
 
-std::shared_ptr<MFA::Path> MFA::Path::Instantiate()
+std::unique_ptr<MFA::Path> MFA::Path::Instantiate()
 {
-	return std::make_shared<Path>();
+	return std::make_unique<Path>();
 }
 
 //-------------------------------------------------------------------------------------------------

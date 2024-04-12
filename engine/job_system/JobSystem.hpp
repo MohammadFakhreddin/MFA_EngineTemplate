@@ -11,9 +11,9 @@ namespace MFA
     {
     public:
 
-        static std::shared_ptr<JobSystem> Instantiate()
+        static std::unique_ptr<JobSystem> Instantiate()
         {
-            return std::make_shared<JobSystem>();
+            return std::make_unique<JobSystem>();
         }
 
         explicit JobSystem()

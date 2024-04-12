@@ -148,6 +148,12 @@ add_subdirectory("${CMAKE_SOURCE_DIR}/engine/job_system")
 include_directories("${CMAKE_SOURCE_DIR}/engine/job_system")
 link_libraries(JobSystem)
 
+### Sound system ############################################
+
+add_subdirectory("${CMAKE_SOURCE_DIR}/engine/sound_system")
+include_directories("${CMAKE_SOURCE_DIR}/engine/sound_system")
+link_libraries(SoundSystem)
+
 ### Renderer ################################################
 
 add_subdirectory("${CMAKE_SOURCE_DIR}/engine/render_system")

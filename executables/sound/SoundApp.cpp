@@ -63,25 +63,7 @@ SoundApp::SoundApp(std::shared_ptr<SwapChainRenderResource> swapChainResource)
 
 //------------------------------------------------------------------
 
-SoundApp::~SoundApp()
-{
-    // TODO: Wrap the sound
-    //Free the sound effects
-    Mix_FreeChunk( _scratchAudio );
-    Mix_FreeChunk( _highAudio );
-    Mix_FreeChunk( _mediumAudio );
-    Mix_FreeChunk( _lowAudio );
-    _scratchAudio = nullptr;
-    _highAudio = nullptr;
-    _mediumAudio = nullptr;
-    _lowAudio = nullptr;
-    
-    //Free the music
-    Mix_FreeMusic( _music );
-    _music = nullptr;
-
-    Mix_Quit();
-}
+SoundApp::~SoundApp() = default;
 
 //------------------------------------------------------------------
 
@@ -146,42 +128,22 @@ void SoundApp::CreateFontSampler()
 void SoundApp::SetupAudio()
 {
     //Initialize SDL_mixer
-    if (Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 2, 2048) < 0)
-    {
-        MFA_LOG_ERROR("SDL_mixer could not initialize! SDL_mixer Error: %s\n", Mix_GetError());
-    }
+    _soundSystem = SoundSystem::Instantiate();
 
     //Load music
-    _music = Mix_LoadMUS(Path::Instance->Get("sample_audio/beat.wav").c_str());
-    if( _music == nullptr)
-    {
-        MFA_LOG_ERROR( "Failed to load beat music! SDL_mixer Error: %s\n", Mix_GetError() );
-    }
+    _soundSystem->AddMusic(Path::Instance->Get("sample_audio/beat.wav"), "beatMusic");
     
     //Load sound effects
-    _scratchAudio = Mix_LoadWAV(Path::Instance->Get("sample_audio/scratch.wav").c_str());
-    if( _scratchAudio == nullptr)
-    {
-        MFA_LOG_ERROR( "Failed to load scratch sound effect! SDL_mixer Error: %s\n", Mix_GetError() );
-    }
-    
-    _highAudio = Mix_LoadWAV(Path::Instance->Get("sample_audio/high.wav").c_str());
-    if( _highAudio == nullptr)
-    {
-        MFA_LOG_ERROR( "Failed to load high sound effect! SDL_mixer Error: %s\n", Mix_GetError() );
-    }
+    _soundSystem->AddChunk(Path::Instance->Get("sample_audio/scratch.wav"), "scratchChunk");
 
-    _mediumAudio = Mix_LoadWAV(Path::Instance->Get("sample_audio/medium.wav").c_str());
-    if( _mediumAudio == nullptr)
-    {
-        MFA_LOG_ERROR( "Failed to load medium sound effect! SDL_mixer Error: %s\n", Mix_GetError() );
-    }
+    // _highAudio = Mix_LoadWAV(Path::Instance->Get("sample_audio/high.wav").c_str());
+    _soundSystem->AddChunk(Path::Instance->Get("sample_audio/high.wav"), "highChunk");
 
-    _lowAudio = Mix_LoadWAV(Path::Instance->Get("sample_audio/low.wav").c_str());
-    if( _lowAudio == nullptr)
-    {
-        MFA_LOG_ERROR( "Failed to load low sound effect! SDL_mixer Error: %s\n", Mix_GetError() );
-    }
+    // _mediumAudio = Mix_LoadWAV(Path::Instance->Get("sample_audio/medium.wav").c_str());
+    _soundSystem->AddChunk(Path::Instance->Get("sample_audio/medium.wav"), "mediumChunk");
+
+    // _lowAudio = Mix_LoadWAV(Path::Instance->Get("sample_audio/low.wav").c_str());
+    _soundSystem->AddChunk(Path::Instance->Get("sample_audio/low.wav"), "lowChunk");
 }
 
 //------------------------------------------------------------------
@@ -194,53 +156,60 @@ void SoundApp::OnSDL_Event(SDL_Event * event)
         {
             //Play high sound effect
             case SDLK_1:
-            Mix_PlayChannel( -1, _highAudio, 0 );
-            break;
-            
+            {
+                Mix_PlayChannel( -1, _soundSystem->GetChunk("highChunk"), 0 );
+                break;
+            }
             //Play medium sound effect
             case SDLK_2:
-            Mix_PlayChannel( -1, _mediumAudio, 0 );
-            break;
-            
+            {
+                Mix_PlayChannel( -1, _soundSystem->GetChunk("mediumChunk"), 0 );
+                break;
+            }
             //Play low sound effect
             case SDLK_3:
-            Mix_PlayChannel( -1, _lowAudio, 0 );
-            break;
-            
+            {
+                Mix_PlayChannel( -1, _soundSystem->GetChunk("lowChunk"), 0 );
+                break;
+            }
             //Play scratch sound effect
             case SDLK_4:
-            Mix_PlayChannel( -1, _scratchAudio, 0 );
-            break;
-
-            case SDLK_9:
-            //If there is no music playing
-            if( Mix_PlayingMusic() == 0 )
             {
-                //Play the music
-                Mix_PlayMusic( _music, -1 );
+                Mix_PlayChannel( -1, _soundSystem->GetChunk("scratchChunk"), 0 );
+                break;
             }
-            //If music is being played
-            else
+            case SDLK_9:
             {
-                //If the music is paused
-                if( Mix_PausedMusic() == 1 )
+                //If there is no music playing
+                if( Mix_PlayingMusic() == 0 )
                 {
-                    //Resume the music
-                    Mix_ResumeMusic();
+                    //Play the music
+                    Mix_PlayMusic( _soundSystem->GetMusic("beatMusic"), -1 );
                 }
-                //If the music is playing
+                //If music is being played
                 else
                 {
-                    //Pause the music
-                    Mix_PauseMusic();
+                    //If the music is paused
+                    if( Mix_PausedMusic() == 1 )
+                    {
+                        //Resume the music
+                        Mix_ResumeMusic();
+                    }
+                    //If the music is playing
+                    else
+                    {
+                        //Pause the music
+                        Mix_PauseMusic();
+                    }
                 }
+                break;
             }
-            break;
-            
             case SDLK_0:
-            //Stop the music
-            Mix_HaltMusic();
-            break;
+            {
+                //Stop the music
+                Mix_HaltMusic();
+                break;
+            }
         }
     }
 }

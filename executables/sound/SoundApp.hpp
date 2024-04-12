@@ -10,6 +10,7 @@
 #include "render_resource/MSAA_RenderResource.hpp"
 #include "BufferTracker.hpp"
 #include "utils/ConsolasFontRenderer.hpp"
+#include "SoundSystem.hpp"
 
 class SoundApp
 {
@@ -45,13 +46,6 @@ private:
 
     std::unique_ptr<MFA::ConsolasFontRenderer::TextData> _textData{};
 
-    //The music that will be played
-    Mix_Music * _music = nullptr;
-
-    //The sound effects that will be used
-    Mix_Chunk * _scratchAudio = nullptr;
-    Mix_Chunk * _highAudio = nullptr;
-    Mix_Chunk * _mediumAudio = nullptr;
-    Mix_Chunk * _lowAudio = nullptr;
-
+    std::unique_ptr<MFA::SoundSystem> _soundSystem{};
+    
 };
